@@ -1,17 +1,16 @@
-#############################################################################################################################
-# Utility functions and classes for creating the project environment.                                                       #
-# Contain the functions: constant_rotation, endpoint_movement, angle_two_vectors, vector_rotation, out_of_bounds            #
-# rectangle_vertices, intersection_area, destination_overlap                                                                #
-# Contains the classes: Vector, Line                                                                                        #
-#############################################################################################################################
+####################################################################################################
+# Utility functions and classes for creating the project environment.                              #
+# Contain the functions: out_of_bounds, rectangle_vertices, intersection_area, destination_overlap #
+# Contains the classes: Vector, Line                                                               #
+####################################################################################################
 
 __author__ = "Pär-Love Palm, Felix Steimle, Jakob Wadman, Veit Wörner"
 __copyright__ = "Copyright 2019, Chalmers University of Technology"
 __credits__ = ["Pär-Love Palm", "Felix Steimle", "Jakob Wadman", "Veit Wörner"]
 __license__ = "GPL"
 __version__ = "0.9b"
-__maintainer__ = "Veit Wörner"
-__email__ = "veit@student.chalmers.se"
+__maintainer__ = "Felix Steimle, Jakob Wadman"
+__email__ = "steimle@student.chalmers.se, wadman@student.chalmers.se"
 __status__ = "Production"
 
 import numpy as np
@@ -19,50 +18,10 @@ from numpy import array
 from numpy.linalg import norm
 from math import pi, cos, sin
 
-
-def constant_rotation(constant,angle):
-    ''' This method is used to rotate a two dimensional vector with constant x value and no y value around its origin by an angle                 
-        Inputs:  constant x value of the rotated vector                                                                            
-                 angle    angle, value in degrees                                                                                  
-        Outputs: vector rotated two dimensional vector '''
-    rotation_vector = array([np.cos(np.deg2rad(angle)),\
-                             np.sin(np.deg2rad(angle))])
-    vector = rotation_vector*constant
-    return vector
-
-
-def endpoint_movement(vector,angle):
-    ''' This method is used to measure the relative movement of the endpoint of a vector during rotation by an angle                 
-        Inputs: vector two dimensional vector                                                                    
-                angle  angle, value in degrees                                                                       
-        Outputs: movement relative movement of the endpoint of the vector'''
-    movement = vector_rotation(vector,angle)-vector
-    return movement
-
-
-def angle_two_vectors(vector1,vector2):
-    ''' This method is used to measure the relative angle between two vectors   
-        It can handle vectors of length zero, despite that makes no sense       
-        Inputs: vector1 two dimensional vector                                  
-                vector2 two dimensional vector                                  
-        Outputs: angle relative angle between the two vectors, value in degrees '''
-    if norm(vector1) != 0 and norm(vector1) != 0:
-        angle = np.rad2deg(np.arccos(np.dot(vector1,vector2)/(norm(vector1)*norm(vector2))))
-    else:
-        angle = 0
-    return angle
-
-
-def vector_rotation(vector,angle):
-    ''' This method is used to rotate a two dimensional vector around its origin by an angle                 
-        Inputs: vector two dimensional vector                                                
-                angle  angle, value in degrees                                               
-        Outputs: vector rotated two dimensional vector '''
-    rotation_matrix = array([[np.cos(np.deg2rad(angle)),-np.sin(np.deg2rad(angle))],
-                             [np.sin(np.deg2rad(angle)),np.cos(np.deg2rad(angle))]])
-    vector = np.dot(rotation_matrix,vector)
-    return vector
-
+from vector_rotation_code import *
+from constant_rotation_code import *
+from endpoint_movement_code import *
+from angle_two_vectors_code import *
 
 def out_of_bounds(cog_list, rotation_list, shape_list = [array([7,2]), array([5,2])], yard_shape=array([30,10])):
     '''Checks if the truck or any of the trailer(s) is out of the yard.
@@ -115,8 +74,6 @@ def out_of_bounds(cog_list, rotation_list, shape_list = [array([7,2]), array([5,
                 return True
       
     return False
-
-
 
 #############################################################################################################################
 # Functions and classes for determining the overlapping area of two rectangles.
