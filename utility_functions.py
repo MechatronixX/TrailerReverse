@@ -181,11 +181,6 @@ def intersection_area(r1, r2):
     return 0.5 * sum(p.x*q.y - p.y*q.x for p, q in
                      zip(intersection, intersection[1:] + intersection[:1]))
 
-
-# Example:
-#r1 = (10, 15, 15, 10, 30)
-#r2 = (15, 15, 20, 10, 0)
-#print(intersection_area(r1, r2))
 ############################################################################################################################
 
 
