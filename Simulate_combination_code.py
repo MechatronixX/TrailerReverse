@@ -75,6 +75,8 @@ class Simulate_combination():
 
     def run(self,velocity,steering_percentage):
         steering_angle = steering_percentage*self.maximal_steering_angle
+        
+        #This step basically seems to perform euler forward for the truck. 
         distance = velocity*self.step_size
         
         truck_movement = constant_rotation(distance,self.truck_rotation)
@@ -93,6 +95,7 @@ class Simulate_combination():
             rotation_truck = 0      
             ## Truck movement
             if steering_percentage != 0:
+                #Seems to be calculating the angular increement by analyzing the position increment? 
                 lock = self.wheelbase_truck/np.tan(np.deg2rad(steering_angle))
                 rotation_truck = np.rad2deg(np.arcsin(distance/lock))/2
             self.truck_rotation += rotation_truck
@@ -103,6 +106,8 @@ class Simulate_combination():
             step_rotation_truck = self.truck_rotation-old_truck_rotation
             old_first_trailer_rotation = self.first_trailer_rotation
             
+            #TODO: It seems this function updates the states recursively, but without 
+            #      using a differential equation directly. WHat is this approach called? 
             if self.number_second_trailers >= 1:
             
                 ## first_trailer movement
