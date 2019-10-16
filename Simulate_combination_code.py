@@ -127,6 +127,7 @@ class Simulate_combination():
         
 
     def run(self,velocity,steering_percentage):
+        """ Update the system one step given current velocity and steering angle. """
         steering_angle = steering_percentage*self.maximal_steering_angle
         
         #This step basically seems to perform euler forward for the truck. 
