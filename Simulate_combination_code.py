@@ -118,12 +118,17 @@ class Simulate_combination():
         #Right now reward is simply squared distance to origin. 
         reward = -(self.truck_translation[0]**2  + self.truck_translation[1]**2)
         
+        dist = np.sqrt(np.abs(reward))
         
         self.run(a[0], a[1] )
         
         new_state = self.get_state() 
-        #TODO: Implement. 
-        finish_episode = False
+        #If we are 2 meters within the origin, break  
+        finish_episode = dist < 2
+        
+        #Try to add a heapload of reward if we finish the episode. 
+        if(finish_episode): 
+            reward = 10000
         
         return new_state, reward, finish_episode
         
