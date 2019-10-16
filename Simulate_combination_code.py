@@ -53,6 +53,7 @@ class Simulate_combination():
                  number_second_trailers,\
                  step_size):
         
+        #These seem to be constants definiing sizes etc. 
         self.maximal_first_trailer_rotation = 90
         self.maximal_second_trailer_rotation = 179
         self.maximal_both_trailers_rotation = 181
@@ -64,14 +65,66 @@ class Simulate_combination():
         self.hitch_translation_first_trailer_second_trailer = -0.5
         self.hitch_translation_second_trailer = 5.5
         
+        #This seems to be the initialstate. 
+       
         self.truck_translation = truck_translation
         self.truck_rotation = truck_rotation
         self.first_trailer_rotation = first_trailer_rotation
         self.second_trailer_rotation = second_trailer_rotation
+        
+        #Save value for reset later. 
+        self.init_truck_translation = truck_translation
+        self.init_truck_rotation = truck_rotation
+        self.init_first_trailer_rotation = first_trailer_rotation
+        self.init_second_trailer_rotation = second_trailer_rotation
+        
+        #This is the target we are aiming for?? 
         self.destination_translation = destination_translation
         self.destination_rotation = destination_rotation
+        
+        #What is this?? 
         self.number_second_trailers = number_second_trailers
+        
+        #Simulation stepsize, for dsicrete integration. 
         self.step_size = step_size
+    
+    def reset(self):
+        """Reset simulation to init state. The init state is defined in the instantiation of this object."""
+           #Save value for reset later. 
+        self.truck_translation = self.init_truck_translation
+        self.truck_rotation = self.init_truck_rotation
+        self.first_trailer_rotation = self.init_first_trailer_rotation
+        self.second_trailer_rotation = self.init_second_trailer_rotation
+        
+        return self.get_state()
+        
+    def get_state(self):
+        """ Returns the current state, as per the current state definition for this system. """
+        posX  = self.truck_translation[0]
+        posY = self.truck_translation[1]
+        
+        new_state = array([posX, posY, 
+                     self.truck_rotation, 
+                     self.first_trailer_rotation, 
+                     self.second_trailer_rotation ])
+        return new_state
+        
+        
+    def step(self, a): 
+        """Convenience function that updates the current state and returns a reward.   """
+        
+        #Right now reward is simply squared distance to origin. 
+        reward = -(self.truck_translation[0]**2  + self.truck_translation[1]**2)
+        
+        
+        self.run(a[0], a[1] )
+        
+        new_state = self.get_state() 
+        #TODO: Implement. 
+        finish_episode = False
+        
+        return new_state, reward, finish_episode
+        
 
     def run(self,velocity,steering_percentage):
         steering_angle = steering_percentage*self.maximal_steering_angle
