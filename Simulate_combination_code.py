@@ -36,6 +36,7 @@ __status__ = "Production"
 
 import numpy as np
 from numpy import array
+import copy 
 
 from vector_rotation_code import *
 from constant_rotation_code import *
@@ -67,16 +68,17 @@ class Simulate_combination():
         
         #This seems to be the initialstate. 
        
-        self.truck_translation = truck_translation
-        self.truck_rotation = truck_rotation
-        self.first_trailer_rotation = first_trailer_rotation
-        self.second_trailer_rotation = second_trailer_rotation
+        self.truck_translation          = truck_translation
+        self.truck_rotation             = truck_rotation
+        self.first_trailer_rotation     = first_trailer_rotation
+        self.second_trailer_rotation    = second_trailer_rotation
         
-        #Save value for reset later. 
-        self.init_truck_translation = truck_translation
-        self.init_truck_rotation = truck_rotation
-        self.init_first_trailer_rotation = first_trailer_rotation
-        self.init_second_trailer_rotation = second_trailer_rotation
+        #Save value for reset later. Everything is written reference in python it seems
+        # even this simple scalars! Therefore we need do deepcopy it explicitly
+        self.init_truck_translation         = copy.deepcopy(truck_translation)
+        self.init_truck_rotation            = copy.deepcopy(truck_rotation)
+        self.init_first_trailer_rotation    = copy.deepcopy(first_trailer_rotation)
+        self.init_second_trailer_rotation   = copy.deepcopy(second_trailer_rotation)
         
         #This is the target we are aiming for?? 
         self.destination_translation = destination_translation
@@ -91,10 +93,10 @@ class Simulate_combination():
     def reset(self):
         """Reset simulation to init state. The init state is defined in the instantiation of this object."""
            #Save value for reset later. 
-        self.truck_translation = self.init_truck_translation
-        self.truck_rotation = self.init_truck_rotation
-        self.first_trailer_rotation = self.init_first_trailer_rotation
-        self.second_trailer_rotation = self.init_second_trailer_rotation
+        self.truck_translation          = copy.deepcopy(self.init_truck_translation)
+        self.truck_rotation             = copy.deepcopy(self.init_truck_rotation)
+        self.first_trailer_rotation     = copy.deepcopy(self.init_first_trailer_rotation)
+        self.second_trailer_rotation    = copy.deepcopy(self.init_second_trailer_rotation)
         
         return self.get_state()
         
