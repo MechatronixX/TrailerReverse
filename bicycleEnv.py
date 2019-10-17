@@ -57,6 +57,7 @@ class BicycleEnv:
     def reset(self):
         # Reset the state of the environment to an initial state
         
+        #TODO : Use a named tuple for all these??
         self.Px         = copy.deepcopy(self.initState[0])
         self.Py         = copy.deepcopy(self.initState[1])
         self.heading    = copy.deepcopy(self.initState[2])
