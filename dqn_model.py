@@ -122,6 +122,9 @@ class DoubleQLearningModel(object):
 
         # Select only the Q-values corresponding to the actions taken (loss should only be applied for these)
         q_online_curr_allactions = q_online_curr
+        
+        #THIS LINE: The actions are not actual actions here but indexes, mapping to 
+        #           a set of actions! So make sure the actions are a in 0,1,2,...,N_actions-1
         q_online_curr = q_online_curr[torch.arange(batch_size),
                                       a]  # New shape: (batch_size,)
         assert q_online_curr.shape == (batch_size, )
