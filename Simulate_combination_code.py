@@ -49,20 +49,7 @@ class Simulate_combination():
                  destination_rotation,\
                  number_trailers,\
                  step_size):
-        
-<<<<<<< HEAD
-        #These seem to be constants definiing sizes etc. 
-        self.maximal_first_trailer_rotation = 90
-        self.maximal_second_trailer_rotation = 179
-        self.maximal_both_trailers_rotation = 181
-        
-        self.wheelbase_truck = 3.5
-        self.maximal_steering_angle = 60
-        self.hitch_translation_truck = -1.5
-        self.hitch_translation_first_trailer_truck = 2.5
-        self.hitch_translation_first_trailer_second_trailer = -0.5
-        self.hitch_translation_second_trailer = 5.5
-=======
+
         self.yard_shape,\
         self.destination_shape,\
         self.drive_wheel_shape,\
@@ -91,16 +78,14 @@ class Simulate_combination():
         self.maximal_first_trailer_rotation,\
         self.maximal_second_trailer_rotation,\
         self.maximal_both_trailers_rotation= visualisation_shapes
->>>>>>> Veit
         
         #This seems to be the initialstate. 
-       
         self.truck_translation          = truck_translation
         self.truck_rotation             = truck_rotation
         self.first_trailer_rotation     = first_trailer_rotation
         self.second_trailer_rotation    = second_trailer_rotation
         
-        #Save value for reset later. Everything is written reference in python it seems
+        # Save value for reset later. Everything is written reference in python it seems
         # even this simple scalars! Therefore we need do deepcopy it explicitly
         self.init_truck_translation         = copy.deepcopy(truck_translation)
         self.init_truck_rotation            = copy.deepcopy(truck_rotation)
@@ -110,15 +95,9 @@ class Simulate_combination():
         #This is the target we are aiming for?? 
         self.destination_translation = destination_translation
         self.destination_rotation = destination_rotation
-<<<<<<< HEAD
         
-        #What is this?? 
-        self.number_second_trailers = number_second_trailers
-        
-        #Simulation stepsize, for dsicrete integration. 
-=======
         self.number_trailers = number_trailers
->>>>>>> Veit
+        #Simulation stepsize, for discrete integration.
         self.step_size = step_size
     
     def reset(self):
@@ -175,10 +154,18 @@ class Simulate_combination():
         first_trailer_movement = vector_rotation(truck_movement,self.first_trailer_rotation)
         second_trailer_movement = vector_rotation(first_trailer_movement,self.second_trailer_rotation)
         
-        hitch_vector_truck = constant_rotation(self.hitch_translation_truck,                                               self.truck_rotation)
-        hitch_vector_first_trailer_truck = constant_rotation(self.hitch_translation_first_trailer_truck,                                                     self.truck_rotation+                                                     self.first_trailer_rotation)
-        hitch_vector_first_trailer_second_trailer = constant_rotation(self.hitch_translation_first_trailer_second_trailer,                                                       self.truck_rotation+                                                       self.first_trailer_rotation)
-        hitch_vector_second_trailer = constant_rotation(self.hitch_translation_second_trailer,                                                 self.truck_rotation+                                                 self.first_trailer_rotation+                                                 self.second_trailer_rotation)
+        hitch_vector_truck = constant_rotation(self.hitch_translation_truck,\
+                                               self.truck_rotation)
+        hitch_vector_first_trailer_truck = constant_rotation(self.hitch_translation_first_trailer_truck,\
+                                                             self.truck_rotation+\
+                                                             self.first_trailer_rotation)
+        hitch_vector_first_trailer_second_trailer = constant_rotation(self.hitch_translation_first_trailer_second_trailer,\
+                                                                      self.truck_rotation+\
+                                                                      self.first_trailer_rotation)
+        hitch_vector_second_trailer = constant_rotation(self.hitch_translation_second_trailer,\
+                                                        self.truck_rotation+\
+                                                        self.first_trailer_rotation+\
+                                                        self.second_trailer_rotation)
         
         if norm(truck_movement) != 0:
             
@@ -203,11 +190,17 @@ class Simulate_combination():
             if self.number_trailers >= 1:
             
                 ## first_trailer movement
-                truck_hitch_movement = truck_movement                                       +endpoint_movement(hitch_vector_truck,                                                          step_rotation_truck)
+                truck_hitch_movement = truck_movement\
+                                       +endpoint_movement(hitch_vector_truck,\
+                                                          step_rotation_truck)
                 
                 first_trailer_movement = vector_rotation(truck_movement,self.first_trailer_rotation)
                 
-                rotation_first_trailer = np.sign(self.first_trailer_rotation)                                         *angle_two_vectors(hitch_vector_first_trailer_truck                                         -first_trailer_movement                                         +truck_hitch_movement,                                         np.sign(distance)*truck_movement)
+                rotation_first_trailer = np.sign(self.first_trailer_rotation)\
+                                         *angle_two_vectors(hitch_vector_first_trailer_truck\
+                                                            -first_trailer_movement\
+                                                            +truck_hitch_movement,\
+                                                            np.sign(distance)*truck_movement)
                 self.first_trailer_rotation = -step_rotation_truck+rotation_first_trailer
                 if self.first_trailer_rotation > self.maximal_first_trailer_rotation:
                     self.first_trailer_rotation = self.maximal_first_trailer_rotation
@@ -219,11 +212,17 @@ class Simulate_combination():
             if self.number_trailers == 2:    
                 
                 ## second_trailer movement
-                first_trailer_hitch_movement = first_trailer_movement                                       +endpoint_movement(hitch_vector_first_trailer_second_trailer,                                                          step_rotation_first_trailer)
+                first_trailer_hitch_movement = first_trailer_movement\
+                                       +endpoint_movement(hitch_vector_first_trailer_second_trailer,\
+                                                          step_rotation_first_trailer)
                 
                 second_trailer_movement = vector_rotation(first_trailer_movement,self.second_trailer_rotation)
                 
-                rotation_second_trailer = np.sign(self.second_trailer_rotation)                                           *angle_two_vectors(hitch_vector_second_trailer                                           -second_trailer_movement                                           +first_trailer_hitch_movement,                                           np.sign(distance)*first_trailer_movement)
+                rotation_second_trailer = np.sign(self.second_trailer_rotation)\
+                                           *angle_two_vectors(hitch_vector_second_trailer\
+                                                              -second_trailer_movement\
+                                                              +first_trailer_hitch_movement,\
+                                                              np.sign(distance)*first_trailer_movement)
                 self.second_trailer_rotation = -step_rotation_truck-step_rotation_first_trailer+rotation_second_trailer
                 if self.second_trailer_rotation>self.maximal_second_trailer_rotation:
                     self.second_trailer_rotation = self.maximal_second_trailer_rotation
