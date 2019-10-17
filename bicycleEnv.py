@@ -47,9 +47,9 @@ class BicycleEnv:
     
     def __calculateReward__(self):
         
-        #reward = -( self.Px**2 + self.Py**2 )
+        reward = -( self.Px**2 + self.Py**2 )
         #Simple reward: Try to get the agent to figure out how to reach the x axis. 
-        reward = -self.Px**2
+        #reward = -self.Px**2
         return reward
     
     def step(self, a):
@@ -62,8 +62,8 @@ class BicycleEnv:
       reward = self.__calculateReward__()
       
       distToTarget = np.sqrt( self.Px**2 + self.Py**2 )
-      
-      episode_finished = distToTarget < 1
+      #distToTarget = np.sqrt( self.Px**2 )
+      episode_finished = distToTarget < 0.1
       
       return self.__getstate__(), reward, episode_finished
       
