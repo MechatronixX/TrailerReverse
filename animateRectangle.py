@@ -17,7 +17,8 @@ class animateRectangle:
     
     #rectAnim = animateRectangle(fig, B,L, Px, Py, heading)
     def __init__( self,fig, B,L, Px, Py, angle):
-        """Specify width and length of rectangle and a handle to a plot axis object """
+        """Specify width and length of rectangle and a handle to a plot axis object. Give inputs 
+        or rectangle position and angle to create an animation"""
         self.B = B
         self.L = L
         self.fig = fig
@@ -29,6 +30,7 @@ class animateRectangle:
         #self.ax = ax
         boxSize = L*2
         self.ax = plt.axes(xlim=(-boxSize, boxSize), ylim=(-boxSize, boxSize))
+        self.ax.axis('equal')
         
         self.rectangle = patches.Rectangle((0, 0), 0.01*L, L, fc='r', ec = 'r')
 #plt.gca().add_patch(rectangle)

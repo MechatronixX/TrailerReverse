@@ -7,6 +7,7 @@ Created on Wed Oct 16 21:23:53 2019
 import numpy as np
 from numpy import array
 import copy 
+from collections import namedtuple
 
 #TODO: Create a proper gym environment when we feel ready. 
 #class CustomEnv(gym.Env):
@@ -14,6 +15,8 @@ class BicycleEnv:
     """A simple bicyle model"""
     #metadata = {'render.modes': ['human']}
 
+    
+    
     def __init__(self, L, Ts, initState ):
         """ L is length front wheel center to reear wheel center """
           
@@ -26,15 +29,49 @@ class BicycleEnv:
         self.heading = initState[2]
         
         self.initState = copy.deepcopy(initState)
+        
+        #TODO: Should be an action space from the gym environment. 
+        #Actions are the steering angles. 
+        self.actions = (-45,0,45)
+        
+      
+    
+        self.actionTuple = namedtuple("Action", ["vel", "steeringRad"])
+        
+        V0 = 1
+        
+        self.action_map = {0:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(-45)  ), 
+                           1:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(0)    ),
+                           2:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(45)   )    }                                                           
+        
+        #self.actions = (0,1,2)
         #self.state = copy.deepcopy(initstate)
       
      
-    def step(self, action):
+    
+    
+    def __calculateReward__(self):
+        return -1
+    
+    def step(self, a):
       """Action is a (tuple velocity, steering angle) """
+       
+      action = self.action_map[a]
+      self.__eulerForwardStep__(action.vel, action.steeringRad)
       
-      V = action[0]
-      steeringAngle = action[1]
+      reward = self.__calculateReward__()
       
+      episode_finished = False
+      
+      return self.__getstate__(), reward, episode_finished
+      
+      
+      #print(self.Py)
+      
+     
+      return self.__getstate__()
+  
+    def __eulerForwardStep__(self,V, steeringAngle):
       qdot = np.tan(steeringAngle)/self.L*V
       
       Ts = self.Ts 
@@ -46,11 +83,7 @@ class BicycleEnv:
       
       self.Px = self.Px + vx*Ts 
       self.Py = self.Py + vy*Ts
-      
-      #print(self.Py)
-      
-     
-      return self.__getstate__()
+
       
       
     # Execute one time step within the environment
@@ -66,7 +99,7 @@ class BicycleEnv:
     
     def __getstate__(self): 
         #Do not get external callers the possibility to fiddle with the internal state. 
-        return copy.deepcopy( (self.Px, self.Py, self.heading) )
+        return copy.deepcopy( np.array( [self.Px, self.Py, self.heading] ))
         
        #Try to instantiate  
 ##L = 2 #Length rear axis to front axis
