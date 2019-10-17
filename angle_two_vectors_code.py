@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[7]:
-
-
-#!/usr/bin/env python
-
 ###########################################################################
 # angle_two_vectors(vector1,vector2)                                      #  
 #                                                                         #

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 ####################################################################################################
 # Utility functions and classes for creating the project environment.                              #
 # Contain the functions: out_of_bounds, rectangle_vertices, intersection_area, destination_overlap #

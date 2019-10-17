@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[13]:
-
-
-#!/usr/bin/env python
-
 ###################################################################################################################
 # Simulate_combination()                                                                                          #  
 #                                                                                                                 #
@@ -44,25 +39,44 @@ from angle_two_vectors_code import *
 
 class Simulate_combination():
     def __init__(self,\
+                 visualisation_shapes,\
                  truck_translation,\
                  truck_rotation,\
                  first_trailer_rotation,\
                  second_trailer_rotation,\
                  destination_translation,\
                  destination_rotation,\
-                 number_second_trailers,\
+                 number_trailers,\
                  step_size):
         
-        self.maximal_first_trailer_rotation = 90
-        self.maximal_second_trailer_rotation = 179
-        self.maximal_both_trailers_rotation = 181
-        
-        self.wheelbase_truck = 3.5
-        self.maximal_steering_angle = 60
-        self.hitch_translation_truck = -1.5
-        self.hitch_translation_first_trailer_truck = 2.5
-        self.hitch_translation_first_trailer_second_trailer = -0.5
-        self.hitch_translation_second_trailer = 5.5
+        self.yard_shape,\
+        self.destination_shape,\
+        self.drive_wheel_shape,\
+        self.hitch_radius,\
+        self.item_translations_truck,\
+        self.truck_shape,\
+        self.cab_shape,\
+        self.wheel_shape,\
+        self.rotation_center_truck,\
+        self.item_steering_rotations_truck,\
+        self.hitch_translation_truck,\
+        self.wheelbase_truck,\
+        self.maximal_steering_angle,\
+        self.item_translations_first_trailer,\
+        self.first_trailer_shape,\
+        self.shaft_shape,\
+        self.rotation_center_first_trailer,\
+        self.item_steering_rotations_first_trailer,\
+        self.hitch_translation_first_trailer_truck,\
+        self.hitch_translation_first_trailer_second_trailer,\
+        self.item_translations_second_trailer,\
+        self.second_trailer_shape,\
+        self.rotation_center_second_trailer,\
+        self.item_steering_rotations_second_trailer,\
+        self.hitch_translation_second_trailer,\
+        self.maximal_first_trailer_rotation,\
+        self.maximal_second_trailer_rotation,\
+        self.maximal_both_trailers_rotation= visualisation_shapes
         
         self.truck_translation = truck_translation
         self.truck_rotation = truck_rotation
@@ -70,7 +84,7 @@ class Simulate_combination():
         self.second_trailer_rotation = second_trailer_rotation
         self.destination_translation = destination_translation
         self.destination_rotation = destination_rotation
-        self.number_second_trailers = number_second_trailers
+        self.number_trailers = number_trailers
         self.step_size = step_size
 
     def run(self,velocity,steering_percentage):
@@ -108,7 +122,7 @@ class Simulate_combination():
             
             #TODO: It seems this function updates the states recursively, but without 
             #      using a differential equation directly. WHat is this approach called? 
-            if self.number_second_trailers >= 1:
+            if self.number_trailers >= 1:
             
                 ## first_trailer movement
                 truck_hitch_movement = truck_movement                                       +endpoint_movement(hitch_vector_truck,                                                          step_rotation_truck)
@@ -124,7 +138,7 @@ class Simulate_combination():
                 
                 step_rotation_first_trailer = self.first_trailer_rotation-old_first_trailer_rotation
                 
-            if self.number_second_trailers == 2:    
+            if self.number_trailers == 2:    
                 
                 ## second_trailer movement
                 first_trailer_hitch_movement = first_trailer_movement                                       +endpoint_movement(hitch_vector_first_trailer_second_trailer,                                                          step_rotation_first_trailer)
