@@ -30,19 +30,14 @@ class BicycleEnv:
         
         self.initState = copy.deepcopy(initState)
         
-        #TODO: Should be an action space from the gym environment. 
-        #Actions are the steering angles. 
-        self.actions = (-45,0,45)
-        
-      
-    
         self.actionTuple = namedtuple("Action", ["vel", "steeringRad"])
         
         V0 = 1
         
         self.action_map = {0:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(-45)  ), 
                            1:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(0)    ),
-                           2:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(45)   )    }                                                           
+                           2:  self.actionTuple(vel=V0, steeringRad = np.deg2rad(45)   ),
+                           3:  self.actionTuple(vel=0, steeringRad = 0                    )}                                                           
         
         #self.actions = (0,1,2)
         #self.state = copy.deepcopy(initstate)
@@ -51,17 +46,24 @@ class BicycleEnv:
     
     
     def __calculateReward__(self):
-        return -1
+        
+        #reward = -( self.Px**2 + self.Py**2 )
+        #Simple reward: Try to get the agent to figure out how to reach the x axis. 
+        reward = -self.Px**2
+        return reward
     
     def step(self, a):
       """Action is a (tuple velocity, steering angle) """
        
       action = self.action_map[a]
+      
       self.__eulerForwardStep__(action.vel, action.steeringRad)
       
       reward = self.__calculateReward__()
       
-      episode_finished = False
+      distToTarget = np.sqrt( self.Px**2 + self.Py**2 )
+      
+      episode_finished = distToTarget < 1
       
       return self.__getstate__(), reward, episode_finished
       
