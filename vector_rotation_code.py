@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
-
-
-#!/usr/bin/env python
-
 ########################################################################################
 # vector_rotation(vector,angle)                                                        #
 #                                                                                      #
@@ -30,7 +25,6 @@ from numpy import array
 def vector_rotation(vector,angle):
     rotation_matrix = array([[np.cos(np.deg2rad(angle)),-np.sin(np.deg2rad(angle))],
                              [np.sin(np.deg2rad(angle)),np.cos(np.deg2rad(angle))]])
-    #TODO: A dot product? should be a matrix multiplication?? 
     vector = np.dot(rotation_matrix,vector)
     return vector
 
