@@ -42,7 +42,8 @@ from load_shapes_code import *
 ###############################################################################
 
 # The use of multiple processors drastically accelerates simulation and visualization.
-# Seldom strange visualizations occur due to the Reader Writer problem, but this does not influence the simulation.
+# Seldom strange visualizations occur due to a unknown problem.
+# This should not influence the simulation.
 multicore = True
 
 # Initial state variables
@@ -66,6 +67,13 @@ plotting_interval = 1e2
 # Do not change
 global plotting_number
 plotting_number = 1
+pause_time = 0.01
+
+global reading
+reading = False
+
+global writing
+writing = False
 
 visualisation_shapes = load_shapes(number_trailers)
 
@@ -84,7 +92,11 @@ simulate_combination = Simulate_combination(visualisation_shapes,\
 def visualize(visualisation_queue):
     while True:
         if visualisation_queue:
-            visualisation_element = visualisation_queue.get()
+            if writing == False:
+                global reading
+                reading = True
+                visualisation_element = visualisation_queue.get()
+                reading = False
             if visualisation_element == 'DONE':
                 break
             visualize_combination.run(visualisation_element)
@@ -112,7 +124,11 @@ def simulate(visualisation_queue,velocity_queue,steering_percentage_queue):
             global plotting_number
             if np.mod(plotting_number,plotting_interval) == 0:
                 plotting_number = 1
-                visualisation_queue.put(visualisation_element)
+                if reading == False:
+                    global writing
+                    writing = True
+                    visualisation_queue.put(visualisation_element)
+                    writing = False
             else:
                 plotting_number += 1
                 
