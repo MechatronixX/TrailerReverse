@@ -99,6 +99,13 @@ def load_shapes(number_trailers):
         # Translation of the hitch relative to the rotation center
         hitch_translation_first_trailer_truck = 5
         
+        hitch_translation_first_trailer_second_trailer = 0
+        item_translations_second_trailer = array([])
+        second_trailer_shape = array([])
+        rotation_center_second_trailer = array([])
+        item_steering_rotations_second_trailer = array([])
+        hitch_translation_second_trailer = 0
+        
     if number_trailers == 2:
         
         # First trailer item numbers

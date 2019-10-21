@@ -45,7 +45,6 @@ from load_shapes_code import *
 # Seldom strange visualizations occur due to a unknown problem.
 # This should not influence the simulation.
 multicore = True
-
 # Initial state variables
 truck_translation = array([np.float(18),np.float(5)])
 truck_rotation = 0
@@ -53,7 +52,7 @@ first_trailer_rotation = 20
 second_trailer_rotation = 20
 destination_translation = array([4.5,5])
 destination_rotation = 180
-number_trailers = 2
+number_trailers = 1
 
 # Size of steps
 step_size = 1e-2
