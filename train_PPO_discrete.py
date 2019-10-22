@@ -8,19 +8,22 @@ Created on Tue Oct 22 19:29:28 2019
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-from gymEnvironments.trailer_reverse_gym_environment import CarTrailerParkingRevEnv
+from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 env = CarTrailerParkingRevEnv()
 
 #Train the PPO to control the discrete trailer/truck environment
  
 def trainDiscreteTrailerTruck():
     ############## Hyperparameters ##############
-    env_name = "LunarLander-v2"
+    #env_name = "LunarLander-v2"
+    env_name = "TrailerReversingDiscrete"
     # creating environment
     #env = gym.make(env_name)
     env = CarTrailerParkingRevEnv()
-    state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0]
+    #state_dim = env.observation_space.shape[0]
+    state_dim = 7
+    action_dim = 4
+    #action_dim = env.action_space.shape[0]
     render = False
     solved_reward = 230         # stop training if avg_reward > solved_reward
     log_interval = 20           # print avg reward in the interval

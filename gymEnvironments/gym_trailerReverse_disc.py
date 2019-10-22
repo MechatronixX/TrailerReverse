@@ -35,6 +35,7 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
         self.viewer = None
         
+        self.name = "TrailerReversingDiscrete"
         self.masscar = 1000
         self.wheelbase = 2.5
         self.mag_T = 20000
@@ -73,6 +74,8 @@ class CarTrailerParkingRevEnv(gym.Env):
         cos_theta = np.cos(theta)
         sin_theta = np.sin(theta)
         
+        #It seems there are for discrete actions. Two of them changes the vehicle velocity, 
+        #and two of them changes the steering angle. 
         #This sseems to be the steering angle increment. 
         T = 0
         ddelta = 0
@@ -84,6 +87,7 @@ class CarTrailerParkingRevEnv(gym.Env):
             ddelta = -self.ddelta_mag
             
         v = v + self.dt/self.masscar * (T - self.kv*v)
+        
         if abs(v) < 0.03:
             v = 0
         # Makes sure steering angle doesn't get too big:
