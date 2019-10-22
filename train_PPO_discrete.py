@@ -85,6 +85,10 @@ def trainDiscreteTrailerTruck():
             print("########## Solved! ##########")
             torch.save(ppo.policy.state_dict(), './PPO_{}.pth'.format(env_name))
             break
+        
+        if i_episode % 100 ==0: 
+            print("Saving PPO parameters to disk.")
+            torch.save(ppo.policy.state_dict(), './PPO_{}.pth'.format(env_name))
             
         # logging
         if i_episode % log_interval == 0:
