@@ -95,6 +95,12 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         if abs(v) < 0.03:
             v = 0
+            
+        #If we jackknife, imagine a squeeking sound and the car has to stop. This implies
+        #more long term penaly as we have to accelerate again now. 
+        if (self.checkJackknife() ): 
+            v =0 
+            
         # Makes sure steering angle doesn't get too big:
         if abs(delta + ddelta) < np.pi/3:
             delta = delta + ddelta
@@ -106,6 +112,14 @@ class CarTrailerParkingRevEnv(gym.Env):
         #self.state = np.array([2, 2, 1], dtype=np.float32)
         return self.state.copy(), reward, done, {}
     
+    
+    def checkJackknife(self): 
+        """ Returns true if the system has jackknifed. """
+        state = self.state
+        x, y, v, cos_theta, sin_theta, delta, theta_t = state
+      
+        return abs(theta_t) > self.jack_knife_angle
+
     def calc_reward(self):
         done = False
         state = self.state
@@ -116,7 +130,7 @@ class CarTrailerParkingRevEnv(gym.Env):
         baseReward = -(trailer_cog[0]**2)
         
         #Check if we jackknifed and induce a huge penalty for it. 
-        jackknife = abs(theta_t) > self.jack_knife_angle
+        jackknife = self.checkJackknife()
         
         if jackknife: 
             reward = baseReward*10

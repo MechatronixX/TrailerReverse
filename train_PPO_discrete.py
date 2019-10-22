@@ -6,9 +6,11 @@ Created on Tue Oct 22 19:29:28 2019
 """
 
 import torch
-import torch.nn as nn
-from torch.distributions import Categorical
+#import torch.nn as nn
+#from torch.distributions import Categorical
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
+#from PPO.PPO_continuous import Memory
+from PPO.PPO import PPO, Memory
 env = CarTrailerParkingRevEnv()
 
 #Train the PPO to control the discrete trailer/truck environment
@@ -31,7 +33,7 @@ def trainDiscreteTrailerTruck():
     max_timesteps = 300         # max timesteps in one episode
     n_latent_var = 64           # number of variables in hidden layer
     update_timestep = 2000      # update policy every n timesteps
-    lr = 0.002
+    lr = 0.0002
     betas = (0.9, 0.999)
     gamma = 0.99                # discount factor
     K_epochs = 4                # update policy for K epochs
