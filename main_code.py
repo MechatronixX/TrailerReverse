@@ -34,10 +34,9 @@ import numpy as np
 from numpy import array
 from multiprocessing import Process, Queue
 
-from Visualize_combination_code import *
-from Simulate_combination_code import *
-from utility_functions import *
-from load_shapes_code import *
+from visualisation.Visualize_combination_code import *
+from simulation.Simulate_combination_code import *
+from helperfunctions.load_shapes_code import *
 
 ###############################################################################
 
