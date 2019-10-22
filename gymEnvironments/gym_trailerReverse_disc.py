@@ -4,7 +4,7 @@ from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 from scipy.integrate import odeint
-from utility_functions import out_of_bounds
+#from utility_functions import out_of_bounds
 
 class CarTrailerParkingRevEnv(gym.Env):
     """
@@ -53,13 +53,18 @@ class CarTrailerParkingRevEnv(gym.Env):
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         
+        #Sine/cos of the angle are in the state vector, hmm. 
         x, y, v, cos_theta, sin_theta, delta, theta_t = self.state
         dtheta = v*np.tan(delta)/self.wheelbase
         
-        ## Integration of the differential equations. 
+        ## Integration of the differential equations. This seems to be a vector with the derivatives. 
         def s_cont_dot(s_cont, t):
-            return np.array([v*s_cont[2], v*s_cont[3], -dtheta*s_cont[3], dtheta*s_cont[2],
+            return np.array([v*s_cont[2], 
+                             v*s_cont[3], 
+                             -dtheta*s_cont[3], 
+                             dtheta*s_cont[2],
                              -dtheta + v/self.trailer_bar_combo_len*np.sin(-s_cont[4])])
+        
         
         s_cont = np.array([x, y, cos_theta, sin_theta, theta_t], dtype=np.float32)
         t_array = np.array([0, self.dt])
@@ -90,6 +95,12 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         if abs(v) < 0.03:
             v = 0
+            
+        #If we jackknife, imagine a squeeking sound and the car has to stop. This implies
+        #more long term penaly as we have to accelerate again now. 
+        if (self.checkJackknife() ): 
+            v =0 
+            
         # Makes sure steering angle doesn't get too big:
         if abs(delta + ddelta) < np.pi/3:
             delta = delta + ddelta
@@ -101,11 +112,31 @@ class CarTrailerParkingRevEnv(gym.Env):
         #self.state = np.array([2, 2, 1], dtype=np.float32)
         return self.state.copy(), reward, done, {}
     
+    
+    def checkJackknife(self): 
+        """ Returns true if the system has jackknifed. """
+        state = self.state
+        x, y, v, cos_theta, sin_theta, delta, theta_t = state
+      
+        return abs(theta_t) > self.jack_knife_angle
+
     def calc_reward(self):
         done = False
         state = self.state
         x, y, v, cos_theta, sin_theta, delta, theta_t = state
+        
         car_cog, car_abs_rot, trailer_cog, trailer_abs_rot = self.get_absolute_orientation_and_cog_of_truck_and_trailer()
+        
+        baseReward = -(trailer_cog[0]**2)
+        
+        #Check if we jackknifed and induce a huge penalty for it. 
+        jackknife = self.checkJackknife()
+        
+        if jackknife: 
+            reward = baseReward*10
+        else:
+            reward = baseReward
+        
         
         #if abs(theta_t) >= self.jack_knife_angle:
         #    done = True
@@ -114,10 +145,9 @@ class CarTrailerParkingRevEnv(gym.Env):
         #    done = True
         
         
-        
+        #TODO: Should rather be the wheel axis center?? 
         dist = np.abs(trailer_cog[0])
         #Let reward be trailer distance to x axis. 
-        reward = -(trailer_cog[0]**2)
         
         done = dist < 0.1 
         
