@@ -52,6 +52,7 @@ def trainDiscreteTrailerTruck():
     avg_length = 0
     timestep = 0
     
+    print('Started training. ')
     # training loop
     for i_episode in range(1, max_episodes+1):
         state = env.reset()

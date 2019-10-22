@@ -40,7 +40,7 @@ def runPPO():
     eps_clip = 0.2              # clip parameter for PPO
     #############################################
 
-    n_episodes = 30
+    n_episodes = 5
     max_timesteps = 300
     render = True
     save_gif = False
