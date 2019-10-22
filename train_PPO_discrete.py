@@ -7,6 +7,7 @@ Created on Tue Oct 22 19:29:28 2019
 
 import torch
 import torch.nn as nn
+import numpy as np
 from torch.distributions import Categorical
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 env = CarTrailerParkingRevEnv()
@@ -74,7 +75,37 @@ def trainDiscreteTrailerTruck():
             
             running_reward += reward
             if render:
-                env.render()
+                truck_translation_x,\
+                truck_translation_y,\
+                velocity,\
+                truck_rotation_cos,\
+                truck_rotation_sin,\
+                delta,\
+                first_trailer_rotation = state
+        
+                second_trailer_rotation = 0
+        
+                truck_translation = [truck_translation_x,\
+                                     truck_translation_y]
+        
+                truck_rotation = np.rad2deg(np.arccos(truck_rotation_cos))
+            
+                steering_percentage = np.rad2deg(delta)/60
+                
+                number_trailers = 1
+                
+                destination_translation = 0
+                destination_rotation = 0
+            
+                visualisation_element = [truck_translation,\
+                                         truck_rotation,\
+                                         first_trailer_rotation,\
+                                         second_trailer_rotation,\
+                                         steering_percentage,\
+                                         destination_translation,\
+                                         destination_rotation,\
+                                         number_trailers]
+                env.render(visualisation_element)
             if done:
                 break
                 

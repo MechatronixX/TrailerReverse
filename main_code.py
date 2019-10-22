@@ -65,7 +65,6 @@ plotting_interval = 1e2
 # Do not change
 global plotting_number
 plotting_number = 1
-pause_time = 0.01
 
 global reading
 reading = False
@@ -82,8 +81,6 @@ simulate_combination = Simulate_combination(visualisation_shapes,\
                                             truck_rotation,\
                                             first_trailer_rotation,\
                                             second_trailer_rotation,\
-                                            destination_translation,\
-                                            destination_rotation,\
                                             number_trailers,\
                                             step_size)
        
@@ -176,13 +173,13 @@ def main():
             first_trailer_rotation,\
             second_trailer_rotation = simulate_combination.run(velocity,steering_percentage)
                     
-            visualisation_element = [truck_translation, 
-                                     truck_rotation,       
-                                     first_trailer_rotation,      
-                                     second_trailer_rotation,      
-                                     steering_percentage,                 
-                                     destination_translation,          
-                                     destination_rotation,          
+            visualisation_element = [truck_translation,\
+                                     truck_rotation,\
+                                     first_trailer_rotation,\
+                                     second_trailer_rotation,\
+                                     steering_percentage,\
+                                     destination_translation,\
+                                     destination_rotation,\
                                      number_trailers]
             
             global plotting_number
