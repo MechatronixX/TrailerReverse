@@ -6,6 +6,10 @@ import numpy as np
 from scipy.integrate import odeint
 from utility_functions import out_of_bounds
 
+from visualisation.Visualize_combination_code import *
+from simulation.Simulate_combination_code import *
+from helperfunctions.load_shapes_code import *
+
 class CarTrailerParkingRevEnv(gym.Env):
     """
     Description:
@@ -49,31 +53,72 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.world_width = 20
         self.world_heigth = 12
         
+        self.number_trailers = 1
+        
+        self.visualisation_shapes = load_shapes(self.number_trailers)
+
+        self.visualize_combination = Visualize_combination(visualisation_shapes)
+        
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
+             
+#        s_cont = np.array([x, y, cos_theta, sin_theta, theta_t], dtype=np.float32)
+#        t_array = np.array([0, self.dt])
+#        s_cont = odeint(s_cont_dot, s_cont, t_array)[1] # integration
+#        x = s_cont[0]
+#        y = s_cont[1]
+#        cos_theta = s_cont[2]
+#        sin_theta = s_cont[3]
+#        theta_t = s_cont[4]
+#        # To ensure that cos_theta^2 + sin_theta^2 = 1. (I tested without it and it doesn't diverge, but still it doesn't hurt)
+#        theta = np.arctan2(sin_theta, cos_theta)
+#        cos_theta = np.cos(theta)
+#        sin_theta = np.sin(theta)
+#        
+#        #This sseems to be the steering angle increment. 
+#        T = 0
+#        ddelta = 0
+#        if action==1: # action=1 <=> backward
+#            T = -self.mag_T
+#        elif action == 2:
+#            ddelta = self.ddelta_mag
+#        elif action == 3:
+#            ddelta = -self.ddelta_mag
+#            
+#        v = v + self.dt/self.masscar * (T - self.kv*v)
+#        if abs(v) < 0.03:
+#            v = 0
+#        # Makes sure steering angle doesn't get too big:
+#        if abs(delta + ddelta) < np.pi/3:
+#            delta = delta + ddelta  
         
-        x, y, v, cos_theta, sin_theta, delta, theta_t = self.state
-        dtheta = v*np.tan(delta)/self.wheelbase
+        truck_translation_x,\
+        truck_translation_y,\
+        velocity,\
+        truck_rotation_cos,\
+        truck_rotation_sin,\
+        delta,\
+        first_trailer_rotation = self.state
         
-        ## Integration of the differential equations. 
-        def s_cont_dot(s_cont, t):
-            return np.array([v*s_cont[2], v*s_cont[3], -dtheta*s_cont[3], dtheta*s_cont[2],
-                             -dtheta + v/self.trailer_bar_combo_len*np.sin(-s_cont[4])])
+        second_trailer_rotation = 0
+        step_size = self.dt
         
-        s_cont = np.array([x, y, cos_theta, sin_theta, theta_t], dtype=np.float32)
-        t_array = np.array([0, self.dt])
-        s_cont = odeint(s_cont_dot, s_cont, t_array)[1] # integration
-        x = s_cont[0]
-        y = s_cont[1]
-        cos_theta = s_cont[2]
-        sin_theta = s_cont[3]
-        theta_t = s_cont[4]
-        # To ensure that cos_theta^2 + sin_theta^2 = 1. (I tested without it and it doesn't diverge, but still it doesn't hurt)
-        theta = np.arctan2(sin_theta, cos_theta)
-        cos_theta = np.cos(theta)
-        sin_theta = np.sin(theta)
+        truck_translation = [truck_translation_x,\
+                             truck_translation_y]
         
-        #This sseems to be the steering angle increment. 
+        truck_rotation = np.rad2deg(np.arccos(truck_rotation_cos))
+        
+        simulate_combination = Simulate_combination(visualisation_shapes,\
+                                                    truck_translation,\
+                                                    truck_rotation,\
+                                                    first_trailer_rotation,\
+                                                    second_trailer_rotation,\
+                                                    self.number_trailers,\
+                                                    step_size)
+        
+
+        
+        #This seems to be the steering angle increment. 
         T = 0
         ddelta = 0
         if action==1: # action=1 <=> backward
@@ -83,18 +128,37 @@ class CarTrailerParkingRevEnv(gym.Env):
         elif action == 3:
             ddelta = -self.ddelta_mag
             
-        v = v + self.dt/self.masscar * (T - self.kv*v)
-        if abs(v) < 0.03:
-            v = 0
+        velocity = velocity + self.dt/self.masscar * (T - self.kv*velocity)
+        if abs(velocity) < 0.03:
+            velocity = 0
         # Makes sure steering angle doesn't get too big:
         if abs(delta + ddelta) < np.pi/3:
             delta = delta + ddelta
-
-        self.state = np.array([x, y, v, cos_theta, sin_theta, delta, theta_t], dtype=np.float32)
+            
+        steering_percentage = np.rad2deg(delta)/60
         
+        truck_translation,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation = self.simulate_combination.run(velocity,steering_percentage)
+        
+        truck_translation_x,\
+        truck_translation_y = truck_translation
+        
+        truck_rotation_cos = np.cos(np.deg2rad(truck_rotation))
+        truck_rotation_sin = np.sin(np.deg2rad(truck_rotation))
+        
+        self.state = np.array([truck_translation_x,\
+                               truck_translation_y,\
+                               velocity,\
+                               truck_rotation_cos,\
+                               truck_rotation_sin,\
+                               delta,\
+                               first_trailer_rotation], dtype=np.float32)
+    
         reward, done = self.calc_reward()
         
-        #self.state = np.array([2, 2, 1], dtype=np.float32)
+        self.state = np.array([2, 2, 1], dtype=np.float32)
         return self.state.copy(), reward, done, {}
     
     def calc_reward(self):

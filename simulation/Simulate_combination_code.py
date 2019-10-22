@@ -45,8 +45,6 @@ class Simulate_combination():
                  truck_rotation,\
                  first_trailer_rotation,\
                  second_trailer_rotation,\
-                 destination_translation,\
-                 destination_rotation,\
                  number_trailers,\
                  step_size):
 
@@ -91,10 +89,6 @@ class Simulate_combination():
         self.init_truck_rotation            = copy.deepcopy(truck_rotation)
         self.init_first_trailer_rotation    = copy.deepcopy(first_trailer_rotation)
         self.init_second_trailer_rotation   = copy.deepcopy(second_trailer_rotation)
-        
-        #This is the target we are aiming for?? 
-        self.destination_translation = destination_translation
-        self.destination_rotation = destination_rotation
         
         self.number_trailers = number_trailers
         #Simulation stepsize, for discrete integration.
