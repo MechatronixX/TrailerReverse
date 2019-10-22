@@ -5,7 +5,7 @@ import torch
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def test():
+def train():
    ############## Hyperparameters ##############
     env_name = "BipedalWalker-v2"
     render = False
@@ -37,15 +37,17 @@ def test():
         env.seed(random_seed)
         np.random.seed(random_seed)
     
+    print('State dimension: ', state_dim, 'Action dim: ', action_dim)
     memory = Memory()
     ppo = PPO(state_dim, action_dim, action_std, lr, betas, gamma, K_epochs, eps_clip)
-    print(lr,betas)
+    print('Learning rate: ',lr,'Beta:' , betas)
     
     # logging variables
     running_reward = 0
     avg_length = 0
     time_step = 0
     
+    print('Starting to train. ')
     # training loop
     for i_episode in range(1, max_episodes+1):
         state = env.reset()
@@ -92,6 +94,6 @@ def test():
             avg_length = 0
     
 if __name__ == '__main__':
-    test()
+    train()
     
     

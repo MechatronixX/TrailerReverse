@@ -159,9 +159,16 @@ def main():
     #############################################
     
     # creating environment
-    env = gym.make(env_name)
+    #env = gym.make(env_name)
+    #state_dim = env.observation_space.shape[0]
+    #action_dim = env.action_space.shape[0]
+    
+    from gymEnvironments.gym_trailerReverse_cont import CarTrailerParkingRevEnv
+    env = CarTrailerParkingRevEnv()
+
+    # Initializations
+    action_dim = env.action_space.n
     state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0]
     
     if random_seed:
         print("Random Seed: {}".format(random_seed))
