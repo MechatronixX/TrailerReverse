@@ -64,7 +64,9 @@ class ActorCritic(nn.Module):
         action_mean = torch.squeeze(self.actor(state))
         
         action_var = self.action_var.expand_as(action_mean)
+        
         cov_mat = torch.diag_embed(action_var).to(device)
+        #cov_mat = torch.diag(action_var).to(device)
         
         dist = MultivariateNormal(action_mean, cov_mat)
         

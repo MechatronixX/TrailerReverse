@@ -1,5 +1,5 @@
 import gym
-from PPO_continuous import PPO, Memory
+from PPO.PPO_continuous import PPO, Memory
 from PIL import Image
 import torch
 
@@ -12,7 +12,7 @@ def test():
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
     
-    n_episodes = 50          # num of episodes to run
+    n_episodes = 3          # num of episodes to run
     max_timesteps = 1500    # max timesteps in one episode
     render = True          # render the environment
     save_gif = False        # png images are saved in gif folder
@@ -37,9 +37,13 @@ def test():
     for ep in range(1, n_episodes+1):
         ep_reward = 0
         state = env.reset()
+        
         for t in range(max_timesteps):
             action = ppo.select_action(state, memory)
             state, reward, done, _ = env.step(action)
+            
+            
+           
             ep_reward += reward
             if render:
                 env.render()
@@ -49,7 +53,9 @@ def test():
                  img.save('./gif/{}.jpg'.format(t))  
             if done:
                 break
-            
+        
+        #Update policy?? 
+        ppo.update(memory);
         print('Episode: {}\tReward: {}'.format(ep, int(ep_reward)))
         ep_reward = 0
         env.close()
