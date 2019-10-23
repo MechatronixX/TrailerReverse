@@ -15,11 +15,13 @@ from DDQN.DDQN_trainLoop import train_loop_ddqn
 from DDQN.dqn_model import DoubleQLearningModel, ExperienceReplay
 import DDQN.dqn_model
 from DDQN.DDQNhelpers import *
+import numpy as np
+import torch
 
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 
 import time
-num_episodes = 10
+num_episodes = 4
 #env = gym.make("CartPole-v0")
 
 env = CarTrailerParkingRevEnv()
@@ -35,7 +37,7 @@ ddqn = DoubleQLearningModel(device, num_states, num_actions, learning_rate)
 loadResult = ddqn.online_model.load_state_dict(torch.load("preTrained/DDQN_TrailerReversingDiscrete.pth")  )
 
 print(loadResult)
-maxSteps = 300
+maxSteps = 800
 
 #Simulation pause. Scale up or down to make simulation slower or faster. 
 Ts = env.dt
@@ -45,7 +47,7 @@ for i in range(num_episodes):
         state = env.reset() #reset to initial state
         state = state[None,:]
         terminal = False # reset terminal flag
-        
+        tot_reward =0
         for i in range(maxSteps):
             env.render()
             time.sleep(Ts_anim)
@@ -56,8 +58,15 @@ for i in range(num_episodes):
             #Act with the greedy policy. 
             action= np.argmax(q_values.squeeze())
             state, reward, terminal, _ = env.step(action) # take one step in the evironment
+            tot_reward += reward 
             state = state[None,:]
+            
             if terminal: 
+                print('Reached terminal state. Total reward: ', tot_reward)
                 break
+            
+            if(i >= maxSteps -1): 
+                 print('Timeout. Total reward: ', tot_reward)
+                
 # close window
 env.close();

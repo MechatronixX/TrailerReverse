@@ -159,8 +159,8 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         
         #TODO: Should rather be the wheel axis center?? 
-        #dist = np.abs(trailer_cog[0])
-        dist = abs(x)   #The car distance as target. 
+        dist = np.abs(trailer_cog[0])
+        #dist = abs(x)   #The car distance as target. 
         reward = -dist*dist
         
         #Let reward be trailer distance to y axis. 
@@ -171,7 +171,7 @@ class CarTrailerParkingRevEnv(gym.Env):
 
     def reset(self):
         # Set your desired initial condition:
-        init_x = 15
+        init_x = 7
         init_y = 6
         init_rot = -10*np.pi/180
         

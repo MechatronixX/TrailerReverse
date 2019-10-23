@@ -23,10 +23,10 @@ def trainDiscreteTrailerTruck():
     env_name = "TrailerReversingDiscrete"
     
     #Loads a pretrainedmodel and then continues training if true 
-    usePretrainedModel = True
+    usePretrainedModel = False
     
     #Show a visualization during training. 
-    enableVisualization = True 
+    enableVisualization = False 
     # creating environment
     #env = gym.make(env_name)
     
@@ -43,7 +43,7 @@ def trainDiscreteTrailerTruck():
     render = False
     solved_reward = 230         # stop training if avg_reward > solved_reward
     log_interval = 20           # print avg reward in the interval
-    max_episodes = 5        # max training episodes
+    max_episodes = 5000        # max training episodes
     max_timesteps = 619         # max timesteps in one episode
     n_latent_var = 64           # number of variables in hidden layer
     
@@ -52,10 +52,10 @@ def trainDiscreteTrailerTruck():
     update_after_N_episodes = 7  
     
     update_timestep = update_after_N_episodes*max_timesteps      # update policy every n timesteps
-    lr = 0.0002
+    lr = 3e-4                   #This learning rate was used in the PPO paper  0.0002
     betas = (0.9, 0.999)
     gamma = 0.99                # discount factor
-    K_epochs = 12               # update policy for K epochs
+    K_epochs = 12               # Go over each mini batch of data this many epochs. 
     eps_clip = 0.2              # clip parameter for PPO
     random_seed = None
     #############################################
@@ -139,5 +139,11 @@ def trainDiscreteTrailerTruck():
         env.close()
             
 if __name__ == '__main__':
-    trainDiscreteTrailerTruck()
+    try:
+        trainDiscreteTrailerTruck()
+    #By doing this the animation shouldnt cause a crash. 
+    except KeyboardInterrupt:
+        print('Interrupted')
+        env.close()
+    
     
