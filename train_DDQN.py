@@ -38,7 +38,7 @@ device = torch.device("cpu")
 #num_states = len(truck.initState)
 
 num_actions = env.action_space.n
-num_states = env.observation_space.shape[0]
+num_states = env.observation_space.shape[ 0]
 
 print('Number of actions', num_actions, 'Number of states', num_states)
 #Training hyperparameters. 

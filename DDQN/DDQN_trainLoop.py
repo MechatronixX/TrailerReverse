@@ -88,9 +88,10 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
             # Assess whether terminal state was reached.
             # The episode may end due to having reached 200 steps, but we should not regard this as reaching the terminal state, and hence not disregard Q(s',a) from the Q target.
             # https://arxiv.org/abs/1712.00378
-            #nonterminal_to_buffer = not finish_episode or steps == maxSteps
             
-            #For this agent the above shoudlnt hold
+            #Timeout should not be a termination of episode, that will create partially observable markov
+            #which is harder o train. 
+            #nonterminal_to_buffer = not finish_episode or steps == maxSteps
             nonterminal_to_buffer = not finish_episode 
             
             # Store experienced transition to replay buffer
@@ -106,7 +107,8 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
                 ddqn.optimizer.zero_grad()
                 loss.backward()
                 ddqn.optimizer.step()
-
+                
+                #Transfer online network parameters to offline network. 
                 cnt_updates += 1
                 if cnt_updates % tau == 0:
                     ddqn.update_target_network()
