@@ -16,6 +16,11 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
     """ A loop that can be used to train a DDQN network. Will usually be somewhat application dependant,
         but this is a baseline that could/should work for the trailer-vehicle environment. """
     
+    #File log output parameters
+    env_name = "TrailerReversingDiscrete" #TODO: Should be polled from the environment. 
+    directory = "./preTrained/"
+    filename = './DDQN_{}.pth'.format(env_name)
+    
     Transition = namedtuple("Transition", ["s", "a", "r", "next_s", "t"])
     #Things we log per each time step each episode. 
     perStepLogTuple = namedtuple("perStepLog", ["Px", "Py","angleRad", "action"])
@@ -63,7 +68,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
             q_buffer.append(q_online_curr)
             
             #Velocity is constant for now
-            new_state, reward, finish_episode,  = env.step(curr_action) # take one step in the evironment
+            new_state, reward, finish_episode,_  = env.step(curr_action) # take one step in the evironment
             
             perStepLog.Px.append(new_state[0] )
             perStepLog.Py.append(new_state[1] )
@@ -102,6 +107,11 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
                     ddqn.update_target_network()
         #########################
         ## End of episode
+        
+        if i % 1 ==0: 
+            print("Saving DDQN parameters to disk.")
+            torch.save(ddqn.online_model.state_dict(), directory+filename)
+        
         eps = max(eps - eps_decay, eps_end) # decrease epsilon        
         
         R_buffer.append(ep_reward)
