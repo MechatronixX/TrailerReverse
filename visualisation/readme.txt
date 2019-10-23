@@ -1,0 +1,1 @@
+This folder contains a fancier way of visualizing the truck and trailer. However, it is still under development so disregard this content unless you are planning to integrate this with the rest of the software. 
