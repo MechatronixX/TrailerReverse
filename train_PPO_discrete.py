@@ -32,11 +32,14 @@ def trainDiscreteTrailerTruck():
     max_episodes = 50000        # max training episodes
     max_timesteps = 300         # max timesteps in one episode
     n_latent_var = 64           # number of variables in hidden layer
-    update_timestep = 2000      # update policy every n timesteps
+    
+    update_after_N_episodes = 7 #Update policy after this many episodes. We important hyperparameter. 
+    
+    update_timestep = update_after_N_episodes*max_timesteps      # update policy every n timesteps
     lr = 0.0002
     betas = (0.9, 0.999)
     gamma = 0.99                # discount factor
-    K_epochs = 4                # update policy for K epochs
+    K_epochs = 12               # update policy for K epochs
     eps_clip = 0.2              # clip parameter for PPO
     random_seed = None
     #############################################
@@ -47,7 +50,7 @@ def trainDiscreteTrailerTruck():
     
     memory = Memory()
     ppo = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip)
-    print(lr,betas)
+    print("Learning rate: ", lr, "Beta:", betas)
     
     # logging variables
     running_reward = 0
@@ -72,6 +75,7 @@ def trainDiscreteTrailerTruck():
             # update if its time
             if timestep % update_timestep == 0:
                 ppo.update(memory)
+                
                 memory.clear_memory()
                 timestep = 0
             
@@ -98,7 +102,7 @@ def trainDiscreteTrailerTruck():
             avg_length = int(avg_length/log_interval)
             running_reward = int((running_reward/log_interval))
             
-            print('Episode {} \t avg length: {} \t reward: {}'.format(i_episode, avg_length, running_reward))
+            print('Episode {} \t avg length: {} \t average reward: {}'.format(i_episode, avg_length, running_reward))
             running_reward = 0
             avg_length = 0
             

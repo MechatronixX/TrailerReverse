@@ -11,8 +11,8 @@ import numpy as np
 from numpy import array
 #import gym
 from collections import namedtuple
-import dqn_model
-from dqn_model import DoubleQLearningModel, ExperienceReplay
+import DDQN.dqn_model
+from DDQN.dqn_model import DoubleQLearningModel, ExperienceReplay
 #from IPython.core.debugger import set_trace
 
 def calculate_q_targets(q1_batch, q2_batch, r_batch, nonterminal_batch, gamma=.99):
