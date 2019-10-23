@@ -31,7 +31,7 @@ def runPPO():
     action_dim = 4
     
     render = True
-    max_timesteps = 500
+    max_timesteps = 619
     n_latent_var = 64           # number of variables in hidden layer
     lr = 0.0007
     betas = (0.9, 0.999)

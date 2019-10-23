@@ -161,9 +161,9 @@ class CarTrailerParkingRevEnv(gym.Env):
         #TODO: Should rather be the wheel axis center?? 
         #dist = np.abs(trailer_cog[0])
         dist = abs(x)   #The car distance as target. 
-        reward = -dist
+        reward = -dist*dist
         
-        #Let reward be trailer distance to x axis. 
+        #Let reward be trailer distance to y axis. 
         
         done = dist < 0.1 
         

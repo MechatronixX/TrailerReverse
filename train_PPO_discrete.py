@@ -11,6 +11,8 @@ import torch
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 #from PPO.PPO_continuous import Memory
 from PPO.PPO import PPO, Memory
+import os.path
+
 env = CarTrailerParkingRevEnv()
 
 #Train the PPO to control the discrete trailer/truck environment
@@ -19,8 +21,20 @@ def trainDiscreteTrailerTruck():
     ############## Hyperparameters ##############
     #env_name = "LunarLander-v2"
     env_name = "TrailerReversingDiscrete"
+    
+    #Loads a pretrainedmodel and then continues training if true 
+    usePretrainedModel = True
+    
+    #Show a visualization during training. 
+    enableVisualization = True 
     # creating environment
     #env = gym.make(env_name)
+    
+    
+     #File log output parameters 
+    directory = "./preTrained/"
+    filename = './PPO_{}.pth'.format(env_name)
+    
     env = CarTrailerParkingRevEnv()
     #state_dim = env.observation_space.shape[0]
     state_dim = 7
@@ -29,11 +43,13 @@ def trainDiscreteTrailerTruck():
     render = False
     solved_reward = 230         # stop training if avg_reward > solved_reward
     log_interval = 20           # print avg reward in the interval
-    max_episodes = 50000        # max training episodes
-    max_timesteps = 300         # max timesteps in one episode
+    max_episodes = 5        # max training episodes
+    max_timesteps = 619         # max timesteps in one episode
     n_latent_var = 64           # number of variables in hidden layer
     
-    update_after_N_episodes = 7 #Update policy after this many episodes. We important hyperparameter. 
+    #Update policy after this many episodes. Important hyperparameter, we do not want to a few episodes
+    #in each training batch.
+    update_after_N_episodes = 7  
     
     update_timestep = update_after_N_episodes*max_timesteps      # update policy every n timesteps
     lr = 0.0002
@@ -50,6 +66,13 @@ def trainDiscreteTrailerTruck():
     
     memory = Memory()
     ppo = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip)
+    
+    #Load a pretrained model if one such exists and it was requested. 
+    if(usePretrainedModel and os.path.exists(directory+filename) ): 
+        print("Using pretrained model")
+        loadRes = ppo.policy.load_state_dict( torch.load( directory+filename )   ) 
+        print(loadRes)
+    
     print("Learning rate: ", lr, "Beta:", betas)
     
     # logging variables
@@ -67,6 +90,9 @@ def trainDiscreteTrailerTruck():
             # Running policy_old:
             action = ppo.policy_old.act(state, memory)
             state, reward, done, _ = env.step(action)
+            
+            if enableVisualization:
+                env.render()
             
             # Saving reward and is_terminal:
             memory.rewards.append(reward)
@@ -90,12 +116,12 @@ def trainDiscreteTrailerTruck():
         # stop training if avg_reward > solved_reward
         if running_reward > (log_interval*solved_reward):
             print("########## Solved! ##########")
-            torch.save(ppo.policy.state_dict(), './PPO_{}.pth'.format(env_name))
+            torch.save(ppo.policy.state_dict(), directory+filename)
             break
         
         if i_episode % 100 ==0: 
             print("Saving PPO parameters to disk.")
-            torch.save(ppo.policy.state_dict(), './PPO_{}.pth'.format(env_name))
+            torch.save(ppo.policy.state_dict(), directory+filename)
             
         # logging
         if i_episode % log_interval == 0:
@@ -105,6 +131,12 @@ def trainDiscreteTrailerTruck():
             print('Episode {} \t avg length: {} \t average reward: {}'.format(i_episode, avg_length, running_reward))
             running_reward = 0
             avg_length = 0
+    ##################
+    ##End of training
+    
+    print("End of training") 
+    if enableVisualization:
+        env.close()
             
 if __name__ == '__main__':
     trainDiscreteTrailerTruck()
