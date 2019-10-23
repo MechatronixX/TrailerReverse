@@ -57,6 +57,9 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.world_width = 20
         self.world_heigth = 12
         
+        #Reset to the initial state. 
+        self.reset()
+        
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         

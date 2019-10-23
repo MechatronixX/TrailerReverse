@@ -12,7 +12,7 @@ from collections import namedtuple
 from DDQN.DDQNhelpers import *
 
 
-def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization=False, batch_size=64, gamma=.94):        
+def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization=False, batch_size=64, gamma=.94, maxSteps = None):        
     """ A loop that can be used to train a DDQN network. Will usually be somewhat application dependant,
         but this is a baseline that could/should work for the trailer-vehicle environment. """
     
@@ -20,6 +20,10 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
     env_name = "TrailerReversingDiscrete" #TODO: Should be polled from the environment. 
     directory = "./preTrained/"
     filename = './DDQN_{}.pth'.format(env_name)
+    
+    #Steps per episode . Revert to default if non argument explicitly provided. 
+    if(maxSteps == None):
+        maxSteps = 500
     
     Transition = namedtuple("Transition", ["s", "a", "r", "next_s", "t"])
     #Things we log per each time step each episode. 
@@ -36,7 +40,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
     
     #Epsilon decays this much each apisode
     #eps_decay = .01
-    eps_decay = 0.002
+    eps_decay = 0.0005
     tau = 1000
     cnt_updates = 0
     R_buffer = []
@@ -51,7 +55,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
         ep_reward = 0 # Initialize "Episodic reward", i.e. the total reward for episode, when disregarding discount factor.
         q_buffer = []
         steps = 0
-        maxSteps = 100
+        
         
         perStepLog = perStepLogTuple(Px =[], Py =[], action =[], angleRad = [])
         
@@ -70,6 +74,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
             #Velocity is constant for now
             new_state, reward, finish_episode,_  = env.step(curr_action) # take one step in the evironment
             
+            #This is hardcoded for the current state definition, so the log will not make sense for other gym environments. 
             perStepLog.Px.append(new_state[0] )
             perStepLog.Py.append(new_state[1] )
             perStepLog.angleRad.append(new_state[2] )
@@ -108,7 +113,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
         #########################
         ## End of episode
         
-        if i % 1 ==0: 
+        if i % 100 ==0: 
             print("Saving DDQN parameters to disk.")
             torch.save(ddqn.online_model.state_dict(), directory+filename)
         
@@ -129,8 +134,11 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
         #print('Episode: {:d}, Total Reward (running avg): {:4.0f} ({:.2f}) Epsilon: {:.3f}, Avg Q: {:.4g}'.format(i, ep_reward, R_avg[-1], eps, np.mean(np.array(q_buffer))))
         
         # If running average > 195 (close to 200), the task is considered solved
-        if R_avg[-1] > 195:
-            return trainingLog
-        
+        #if R_avg[-1] > 195:
+        #    return trainingLog
+    #########################
+    ### Enable training
+    if enable_visualization: 
+        env.close()
     print("Training finished.")
     return trainingLog

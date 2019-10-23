@@ -31,8 +31,10 @@ num_states = env.observation_space.shape[0]
 learning_rate = 1e-3
 ddqn = DoubleQLearningModel(device, num_states, num_actions, learning_rate)
 
-ddqn.online_model.load_state_dict(torch.load("preTrained/DDQN_TrailerReversingDiscrete.pth")  )
+#Load pre-trained model. 
+loadResult = ddqn.online_model.load_state_dict(torch.load("preTrained/DDQN_TrailerReversingDiscrete.pth")  )
 
+print(loadResult)
 maxSteps = 300
 
 #Simulation pause. Scale up or down to make simulation slower or faster. 
@@ -49,8 +51,10 @@ for i in range(num_episodes):
             time.sleep(Ts_anim)
             with torch.no_grad():
                 q_values = ddqn.online_model(torch.tensor(state, dtype=torch.float, device=device)).cpu().numpy()
-            policy = eps_greedy_policy(q_values.squeeze(), .1) # greedy policy
-            action = np.random.choice(num_actions, p=policy)
+            #policy = eps_greedy_policy(q_values.squeeze(), .1) # greedy policy
+            #action = np.random.choice(num_actions, p=policy)
+            #Act with the greedy policy. 
+            action= np.argmax(q_values.squeeze())
             state, reward, terminal, _ = env.step(action) # take one step in the evironment
             state = state[None,:]
             if terminal: 

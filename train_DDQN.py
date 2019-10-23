@@ -42,7 +42,7 @@ num_states = env.observation_space.shape[0]
 
 print('Number of actions', num_actions, 'Number of states', num_states)
 #Training hyperparameters. 
-num_episodes = 700
+num_episodes = 1000
 batch_size = 128
 gamma = .94
 learning_rate = 1e-3
@@ -50,13 +50,20 @@ learning_rate = 1e-3
 # Object holding our online / offline Q-Networks
 ddqn = DoubleQLearningModel(device, num_states, num_actions, learning_rate)
 
+#We should train for a time long enough to converge to our target. 
+initState = env.state
+distToTarget = np.sqrt( initState[0]**2 + initState[1]**2  )
+timeToTarget = env.max_speed/distToTarget*200   #Nominal birdsflight time at max speed times margin
+maxSteps = np.round(timeToTarget/env.dt) 
+
+print('Will train each episode for (in real time)', timeToTarget, 'implying ', maxSteps, 'steps') 
 
 # Create replay buffer, where experience in form of tuples <s,a,r,s',t>, gathered from the environment is stored 
 # for training
 replay_buffer = ExperienceReplay(device, num_states)
 
 # Train
-trainingLog = train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization, batch_size, gamma)
+trainingLog = train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization, batch_size, gamma, maxSteps)
 
 
 
