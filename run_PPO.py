@@ -12,6 +12,7 @@ import torch
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 
 ##Simulate pretrained PPO on an environment.  
+env = CarTrailerParkingRevEnv()
 
 def runPPO():
     ############## Hyperparameters ##############
@@ -25,13 +26,13 @@ def runPPO():
     env_name = "TrailerReversingDiscrete"
     # creating environment
     #env = gym.make(env_name)
-    env = CarTrailerParkingRevEnv()
+    
     #state_dim = env.observation_space.shape[0]
     state_dim = 7
     action_dim = 4
     
     render = True
-    max_timesteps = 500
+    max_timesteps = 619
     n_latent_var = 64           # number of variables in hidden layer
     lr = 0.0007
     betas = (0.9, 0.999)
@@ -40,8 +41,8 @@ def runPPO():
     eps_clip = 0.2              # clip parameter for PPO
     #############################################
 
-    n_episodes = 30
-    max_timesteps = 300
+    n_episodes = 3
+    max_timesteps = 700
     render = True
     save_gif = False
 
@@ -58,6 +59,7 @@ def runPPO():
         state = env.reset()
         for t in range(max_timesteps):
             action = ppo.policy_old.act(state, memory)
+            #action = 1 #Debug by forcing an action 
             state, reward, done, _ = env.step(action)
             ep_reward += reward
             if render:
@@ -74,4 +76,12 @@ def runPPO():
         env.close()
     
 if __name__ == '__main__':
-    runPPO()
+    try:
+        runPPO()
+    #By doing this the animation shouldnt cause a crash. 
+    except KeyboardInterrupt:
+        print('Interrupted')
+        env.close()
+    
+    
+    

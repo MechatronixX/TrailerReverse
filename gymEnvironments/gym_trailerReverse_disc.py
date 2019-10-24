@@ -4,7 +4,7 @@ from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 from scipy.integrate import odeint
-from utility_functions import out_of_bounds
+#from utility_functions import out_of_bounds
 
 class CarTrailerParkingRevEnv(gym.Env):
     """
@@ -38,11 +38,18 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.name = "TrailerReversingDiscrete"
         self.masscar = 1000
         self.wheelbase = 2.5
+        
+        #Limit speed to this value (m/s)
+        self.max_speed = 1
+        
+        #Mag T seems to be force magnitude for the discrete cotntrol of velocyt
         self.mag_T = 20000
         self.kv = 1000
         self.dt = 0.02  # seconds between state updates
         self.ddelta_mag = 3*np.pi/2*self.dt
         self.trailer_len = 2
+        
+        #This defines the square box in the rendering? 
         self.target_position = np.array([self.trailer_len/2 + 2, 6])
         self.bar_len = 1
         self.trailer_bar_combo_len = self.trailer_len + self.bar_len
@@ -50,16 +57,24 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.world_width = 20
         self.world_heigth = 12
         
+        #Reset to the initial state. 
+        self.reset()
+        
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         
+        #Sine/cos of the angle are in the state vector, hmm. 
         x, y, v, cos_theta, sin_theta, delta, theta_t = self.state
         dtheta = v*np.tan(delta)/self.wheelbase
         
-        ## Integration of the differential equations. 
+        ## Integration of the differential equations. This seems to be a vector with the derivatives. 
         def s_cont_dot(s_cont, t):
-            return np.array([v*s_cont[2], v*s_cont[3], -dtheta*s_cont[3], dtheta*s_cont[2],
+            return np.array([v*s_cont[2], 
+                             v*s_cont[3], 
+                             -dtheta*s_cont[3], 
+                             dtheta*s_cont[2],
                              -dtheta + v/self.trailer_bar_combo_len*np.sin(-s_cont[4])])
+        
         
         s_cont = np.array([x, y, cos_theta, sin_theta, theta_t], dtype=np.float32)
         t_array = np.array([0, self.dt])
@@ -90,6 +105,15 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         if abs(v) < 0.03:
             v = 0
+            
+        #If we jackknife, imagine a squeeking sound and the car has to stop. This implies
+        #more long term penaly as we have to accelerate again now. 
+        #if (self.checkJackknife() ): 
+        #    v =0 
+            
+        #Clamp velocity within reasonanle boundaries.     
+        v = np.clip(v, -self.max_speed, self.max_speed)    
+            
         # Makes sure steering angle doesn't get too big:
         if abs(delta + ddelta) < np.pi/3:
             delta = delta + ddelta
@@ -98,14 +122,34 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         reward, done = self.calc_reward()
         
-        #self.state = np.array([2, 2, 1], dtype=np.float32)
         return self.state.copy(), reward, done, {}
     
+    
+    def checkJackknife(self): 
+        """ Returns true if the system has jackknifed. """
+        state = self.state
+        x, y, v, cos_theta, sin_theta, delta, theta_t = state
+      
+        return abs(theta_t) > self.jack_knife_angle
+
     def calc_reward(self):
         done = False
         state = self.state
         x, y, v, cos_theta, sin_theta, delta, theta_t = state
+        
         car_cog, car_abs_rot, trailer_cog, trailer_abs_rot = self.get_absolute_orientation_and_cog_of_truck_and_trailer()
+        
+        #baseReward = -(trailer_cog[0]**2)
+        #baseReard = -(np.abs(trailer_cog[0]))
+        
+        #Check if we jackknifed and induce a huge penalty for it. 
+        #jackknife = self.checkJackknife()
+        
+        #if jackknife: 
+        #    reward = baseReward*100
+        #else:
+        #reward = baseReward
+        
         
         #if abs(theta_t) >= self.jack_knife_angle:
         #    done = True
@@ -114,10 +158,12 @@ class CarTrailerParkingRevEnv(gym.Env):
         #    done = True
         
         
-        
+        #TODO: Should rather be the wheel axis center?? 
         dist = np.abs(trailer_cog[0])
-        #Let reward be trailer distance to x axis. 
-        reward = -(trailer_cog[0]**2)
+        #dist = abs(x)   #The car distance as target. 
+        reward = -dist*dist
+        
+        #Let reward be trailer distance to y axis. 
         
         done = dist < 0.1 
         
@@ -125,12 +171,23 @@ class CarTrailerParkingRevEnv(gym.Env):
 
     def reset(self):
         # Set your desired initial condition:
+        init_x = 7
+        init_y = 6
+        init_rot = -10*np.pi/180
+        
+        self.state = np.array([init_x, init_y, 0, np.cos(init_rot), np.sin(init_rot), 0, 0], dtype=np.float32)
+        return self.state
+    
+    def reset_rand(self): 
+         # Set your desired initial condition:
         init_x = np.random.uniform(14, 16)
         init_y = np.random.uniform(4, 8)
         init_rot = np.random.uniform(-10*np.pi/180, 10*np.pi/180)
         
         self.state = np.array([init_x, init_y, 0, np.cos(init_rot), np.sin(init_rot), 0, 0], dtype=np.float32)
         return self.state
+        
+    
     
     def get_absolute_orientation_and_cog_of_truck_and_trailer(self):
         x, y, v, cos_theta, sin_theta, delta, theta_t = self.state

@@ -17,7 +17,7 @@ class BicycleEnv:
 
     
     
-    def __init__(self, L, Ts, initState ):
+    def __init__(self, L=2, Ts=0.05, initState= (5,0,0) ):
         """ L is length front wheel center to reear wheel center """
           
         self.L = L
