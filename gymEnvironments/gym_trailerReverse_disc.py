@@ -4,7 +4,6 @@ from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 from scipy.integrate import odeint
-#from utility_functions import out_of_bounds
 
 class CarTrailerParkingRevEnv(gym.Env):
     """
@@ -59,6 +58,12 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         self.currentTimeIndex = 0
         
+        #######################################################################
+        self.trailer_translation_old = 0
+        self.trailer_translation_new = 0
+        self.trailer_rotation_new = 0
+        #######################################################################
+        
         #Specify when timeout occurs. 
         self.timeOut = 2000
         
@@ -73,6 +78,12 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         #Sine/cos of the angle are in the state vector, hmm. 
         x, y, v, cos_theta, sin_theta, delta, theta_t = self.state
+        
+        #######################################################################
+        _, _, trailer_cog, _ = self.get_absolute_orientation_and_cog_of_truck_and_trailer()
+        self.trailer_translation_old = trailer_cog
+        #######################################################################
+        
         dtheta = v*np.tan(delta)/self.wheelbase
         
         ## Integration of the differential equations. This seems to be a vector with the derivatives. 
@@ -128,6 +139,12 @@ class CarTrailerParkingRevEnv(gym.Env):
         # Makes sure steering angle doesn't get too big:
         if abs(delta + ddelta) < np.pi/3:
             delta = delta + ddelta
+            
+        #######################################################################
+        _, _, trailer_cog, trailer_abs_rot = self.get_absolute_orientation_and_cog_of_truck_and_trailer()
+        self.trailer_translation_new = trailer_cog
+        self.trailer_rotation_new = trailer_abs_rot
+        #######################################################################
 
         self.state = np.array([x, y, v, cos_theta, sin_theta, delta, theta_t], dtype=np.float32)
         
@@ -150,42 +167,46 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         car_cog, car_abs_rot, trailer_cog, trailer_abs_rot = self.get_absolute_orientation_and_cog_of_truck_and_trailer()
         
-        #baseReward = -(trailer_cog[0]**2)
-        #baseReard = -(np.abs(trailer_cog[0]))
+        reward = 0
         
         #Check if we jackknifed and induce a huge penalty for it. 
-        #jackknife = self.checkJackknife()
+        jackknife = self.checkJackknife()
+        if jackknife: 
+            reward -= 1e3
         
-        #if jackknife: 
-        #    reward = baseReward*100
-        #else:
-        #reward = baseReward
+        # Checks if the trailer is out of bounds
+        out_of_bounds = (self.trailer_translation_new[0] > self.world_width) or\
+                      (self.trailer_translation_new[0] < 0) or\
+                      (self.trailer_translation_new[1] > self.world_heigth) or\
+                      (self.trailer_translation_new[1] < 0)
+        if out_of_bounds:
+            reward -= 1e1
         
+        # Calculates thr distance of the traier to the target before and after 
+        translation_error_old = np.linalg.norm(self.trailer_translation_old-self.target_position)
+        translation_error_new = np.linalg.norm(self.trailer_translation_new-self.target_position)
+                
+        reward += 1e3*(translation_error_old-translation_error_new)
         
-        #if abs(theta_t) >= self.jack_knife_angle:
-        #    done = True
-        #if out_of_bounds([car_cog, trailer_cog], [180/np.pi*car_abs_rot, 180/np.pi*trailer_abs_rot],
-        #                 yard_shape = np.array([self.world_width, self.world_heigth])):
-        #    done = True
+        reward -= 1e1*self.currentTimeIndex
         
+        done =  (translation_error_new < 0.1)
         
-        #TODO: Should rather be the wheel axis center?? 
-        #dist = np.abs(trailer_cog[0])
-        dist = np.sqrt(trailer_cog[0]**2 + trailer_cog[1]**2 )
-        #dist = abs(x)   #The car distance as target. 
-        reward = -dist*dist
-        
-        #Let reward be trailer distance to y axis. 
-        
-        done = dist < 0.3 
+        if done:
+            reward += 1e6
+            reward -= 1e3*self.trailer_rotation_new 
         
         #Quick and dirty debug! Timeout is not a terminal state, but a state with 
         #a discounted next reward. We just do not know how to implement a timeout when using 
         # baselines . Timeout should not be a terminal state!
         timeOut = self.currentTimeIndex > self.timeOut
         
-        done = done or timeOut
-        
+        if timeOut:
+            done = True
+            
+        if np.mod(self.currentTimeIndex,100):
+            print(reward)
+            
         return reward, done
 
     def reset(self):

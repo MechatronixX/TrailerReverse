@@ -21,10 +21,10 @@ from numpy import array
 from numpy.linalg import norm
 from math import pi, cos, sin
 
-from vector_rotation_code import *
-from constant_rotation_code import *
-from endpoint_movement_code import *
-from angle_two_vectors_code import *
+from helperfunctions.vector_rotation_code import *
+from helperfunctions.constant_rotation_code import *
+from helperfunctions.endpoint_movement_code import *
+from helperfunctions.angle_two_vectors_code import *
 
 def out_of_bounds(cog_list, rotation_list, shape_list = [array([7,2]), array([5,2])], yard_shape=array([30,10])):
     '''Checks if the truck or any of the trailer(s) is out of the yard.

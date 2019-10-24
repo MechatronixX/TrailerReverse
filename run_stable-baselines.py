@@ -16,7 +16,6 @@ from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 # Enjoy trained agent
 
 def run():
-    
     model = PPO2.load("ppo2_trailer")
     
     env = CarTrailerParkingRevEnv()
