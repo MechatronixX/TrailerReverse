@@ -176,25 +176,31 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         # Checks if the trailer is out of bounds
         out_of_bounds = (self.trailer_translation_new[0] > self.world_width) or\
-                      (self.trailer_translation_new[0] < 0) or\
-                      (self.trailer_translation_new[1] > self.world_heigth) or\
-                      (self.trailer_translation_new[1] < 0)
+                        (self.trailer_translation_new[0] < 0) or\
+                        (self.trailer_translation_new[1] > self.world_heigth) or\
+                        (self.trailer_translation_new[1] < 0)
         if out_of_bounds:
-            reward -= 1e1
+            reward -= 1e3
         
         # Calculates thr distance of the traier to the target before and after 
         translation_error_old = np.linalg.norm(self.trailer_translation_old-self.target_position)
         translation_error_new = np.linalg.norm(self.trailer_translation_new-self.target_position)
-                
-        reward += 1e3*(translation_error_old-translation_error_new)
         
-        reward -= 1e1*self.currentTimeIndex
+        # The reward is increasing, if the distance to the target is decreasing
+        reward += 1e6*(translation_error_old-translation_error_new)
         
-        done =  (translation_error_new < 0.1)
+        # The reward is the lower, the higher the distance to the target is 
+        reward -= translation_error_new
         
-        if done:
+        # The reward is the lower, the higher the current time index is 
+        reward -= self.currentTimeIndex
+        
+        if translation_error_new < 0.1:
+            # Christmas bonus
             reward += 1e6
-            reward -= 1e3*self.trailer_rotation_new 
+            # The reward is the lower, the higher the rotation error of the trailer is 
+            reward -= 1e3*np.abs(self.trailer_rotation_new) 
+            done = True
         
         #Quick and dirty debug! Timeout is not a terminal state, but a state with 
         #a discounted next reward. We just do not know how to implement a timeout when using 
@@ -203,9 +209,6 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         if timeOut:
             done = True
-            
-        if np.mod(self.currentTimeIndex,100):
-            print(reward)
             
         return reward, done
 

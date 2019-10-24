@@ -17,7 +17,7 @@ from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 
 def run():
     model = PPO2.load("ppo2_trailer")
-    
+    n_cpu = 8
     env = CarTrailerParkingRevEnv()
     obs = env.reset()
     done = False 
