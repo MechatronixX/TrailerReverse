@@ -57,10 +57,18 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.world_width = 20
         self.world_heigth = 12
         
+        self.currentTimeIndex = 0
+        
+        #Specify when timeout occurs. 
+        self.timeOut = 1000
+        
         #Reset to the initial state. 
         self.reset()
         
     def step(self, action):
+        
+        self.currentTimeIndex+=1
+        
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         
         #Sine/cos of the angle are in the state vector, hmm. 
@@ -165,11 +173,22 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         #Let reward be trailer distance to y axis. 
         
-        done = dist < 0.1 
+        done = dist < 0.3 
+        
+        #Quick and dirty debug! Timeout is not a terminal state, but a state with 
+        #a discounted next reward. We just do not know how to implement a timeout when using 
+        # baselines . Timeout should not be a terminal state!
+        timeOut = self.currentTimeIndex > self.timeOut
+        
+        done = done or timeOut
         
         return reward, done
 
     def reset(self):
+        
+        #Keep track if number of updates the current episode
+        self.currentTimeIndex = 0
+        
         # Set your desired initial condition:
         init_x = 7
         init_y = 6
