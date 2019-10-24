@@ -43,7 +43,7 @@ from helperfunctions.load_shapes_code import *
 # The use of multiple processors drastically accelerates simulation and visualization.
 # Seldom strange visualizations occur due to a unknown problem.
 # This should not influence the simulation.
-multicore = True
+multicore = False
 # Initial state variables
 truck_translation = array([np.float(20),np.float(3.5)])
 truck_rotation = 0
@@ -148,7 +148,7 @@ def main():
             
 ###############################################################################
 ########### This is just a demonstration 
-            velocity = 0
+            velocity = 0.1
             steering_percentage = -0.2
 ###############################################################################
             
@@ -164,7 +164,7 @@ def main():
             
 ###############################################################################
 ########### This is just a demonstration 
-            velocity = 0
+            velocity = 0.1
             steering_percentage = -0.2
 ###############################################################################
             
