@@ -110,10 +110,10 @@ class CarTrailerParkingRevEnv(gym.Env):
         elif action==1: 
             v = 0 #Brake
         elif action == 2:
-            v =1 #Forward
+            v = self.max_speed #Forward
             F = 1
         elif action == 3:
-            v =-1 #Reverse
+            v =-self.max_speed #Reverse
             F = -1
         elif action == 4: 
             delta += self.ddelta_mag
@@ -133,11 +133,9 @@ class CarTrailerParkingRevEnv(gym.Env):
             
         #Clamp velocity within reasonanle boundaries.     
         v = np.clip(v, -self.max_speed, self.max_speed)    
-            
-        # Makes sure steering angle doesn't get too big:
-        if abs(delta + ddelta) < np.pi/3:
-            delta = delta + ddelta
-
+        
+        delta = np.clip(delta, -np.pi/3, np.pi/3     )
+       
         self.state = np.array([x, y, v, cos_theta, sin_theta, delta, theta_t], dtype=np.float32)
         
         reward, done = self.calc_reward()
