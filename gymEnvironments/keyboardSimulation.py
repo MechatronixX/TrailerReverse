@@ -29,6 +29,8 @@ for i in range(2500):
             action = 2
         elif input_char == "d".encode():
             action = 3
+        elif input_char == "w".encode():
+            action = 4
     
     state, reward, done, _ = env.step(action)
     rev_sum = rev_sum + reward

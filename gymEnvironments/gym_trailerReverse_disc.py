@@ -31,7 +31,7 @@ class CarTrailerParkingRevEnv(gym.Env):
     def __init__(self):
         high = np.array([50, 50, np.finfo(np.float32).max, 1, 1, np.pi/2, np.finfo(np.float32).max])
         self.state = None
-        self.action_space = spaces.Discrete(4)
+        self.action_space = spaces.Discrete(5)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
         self.viewer = None
         
@@ -60,7 +60,7 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.currentTimeIndex = 0
         
         #Specify when timeout occurs. 
-        self.timeOut = 1000
+        self.timeOut = 2000
         
         #Reset to the initial state. 
         self.reset()
@@ -108,6 +108,8 @@ class CarTrailerParkingRevEnv(gym.Env):
             ddelta = self.ddelta_mag
         elif action == 3:
             ddelta = -self.ddelta_mag
+        elif action == 4: 
+            T = self.mag_T
             
         v = v + self.dt/self.masscar * (T - self.kv*v)
         
@@ -115,9 +117,10 @@ class CarTrailerParkingRevEnv(gym.Env):
             v = 0
             
         #If we jackknife, imagine a squeeking sound and the car has to stop. This implies
-        #more long term penaly as we have to accelerate again now. 
-        #if (self.checkJackknife() ): 
-        #    v =0 
+        #more long term penaly as we have to accelerate again now. If force T is larger than 0
+        #we are trying to drive foward to avoid the jacknife, so dont zero velocity out then.
+        if (self.checkJackknife() and T <= 0 ): 
+            v =0 
             
         #Clamp velocity within reasonanle boundaries.     
         v = np.clip(v, -self.max_speed, self.max_speed)    
@@ -167,7 +170,8 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         
         #TODO: Should rather be the wheel axis center?? 
-        dist = np.abs(trailer_cog[0])
+        #dist = np.abs(trailer_cog[0])
+        dist = np.sqrt(trailer_cog[0]**2 + trailer_cog[1]**2 )
         #dist = abs(x)   #The car distance as target. 
         reward = -dist*dist
         
@@ -190,7 +194,7 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.currentTimeIndex = 0
         
         # Set your desired initial condition:
-        init_x = 7
+        init_x = 8
         init_y = 6
         init_rot = -10*np.pi/180
         
