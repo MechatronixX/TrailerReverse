@@ -20,17 +20,19 @@ FPS = 2
 Ts = 1/FPS
 
 for i in range(2500):
-    action = 0
+    action = 0 #Deafult action, do nothing. 
     if msvcrt.kbhit():
         input_char = msvcrt.getch()
-        if input_char == "s".encode():
-            action = 1
-        elif input_char == "a".encode():
-            action = 2
-        elif input_char == "d".encode():
-            action = 3
+        if input_char == "q".encode():
+            action = 1 #Stopa
         elif input_char == "w".encode():
-            action = 4
+            action = 2 #Forward
+        elif input_char == "s".encode():
+            action = 3 #Reverse
+        elif input_char == "a".encode():
+            action = 4 #inc steering
+        elif input_char == "d".encode():
+            action = 5 #dec steering
     
     state, reward, done, _ = env.step(action)
     rev_sum = rev_sum + reward
