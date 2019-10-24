@@ -23,7 +23,7 @@ from numpy import array
 def load_shapes(number_trailers):
     
     # Shape of the yard
-    yard_shape = array([30,10])
+    yard_shape = array([27,5])
     
     # Shape of the destination, here chosen equals to the shape of the second trailer
     destination_shape = array([9,2])

@@ -45,11 +45,11 @@ from helperfunctions.load_shapes_code import *
 # This should not influence the simulation.
 multicore = True
 # Initial state variables
-truck_translation = array([np.float(18),np.float(5)])
+truck_translation = array([np.float(20),np.float(3.5)])
 truck_rotation = 0
-first_trailer_rotation = 20
-second_trailer_rotation = 20
-destination_translation = array([4.5,5])
+first_trailer_rotation = 10
+second_trailer_rotation = 10
+destination_translation = array([4.5,2.5])
 destination_rotation = 180
 number_trailers = 1
 
@@ -148,8 +148,8 @@ def main():
             
 ###############################################################################
 ########### This is just a demonstration 
-            velocity = -np.sin(step_number/1e3*np.pi)
-            steering_percentage = np.sin(step_number/1e4*np.pi)
+            velocity = 0
+            steering_percentage = -0.2
 ###############################################################################
             
             velocity_queue.put(velocity)
@@ -164,8 +164,8 @@ def main():
             
 ###############################################################################
 ########### This is just a demonstration 
-            velocity = np.sin(step_number/1e3*np.pi)
-            steering_percentage = np.sin(step_number/1e4*np.pi)
+            velocity = 0
+            steering_percentage = -0.2
 ###############################################################################
             
             truck_translation,\
