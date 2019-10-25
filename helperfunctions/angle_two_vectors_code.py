@@ -12,7 +12,6 @@
 ###########################################################################
 
 __author__ = "Pär-Love Palm, Felix Steimle, Jakob Wadman, Veit Wörner"
-__copyright__ = "Copyright 2019, Chalmers University of Technology"
 __credits__ = ["Pär-Love Palm", "Felix Steimle", "Jakob Wadman", "Veit Wörner"]
 __license__ = "GPL"
 __version__ = "0.9b"
