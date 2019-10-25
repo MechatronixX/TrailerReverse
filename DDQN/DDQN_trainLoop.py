@@ -40,7 +40,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
     
     #Epsilon decays this much each apisode
     #eps_decay = .01
-    eps_decay = 0.0005
+    eps_decay = 0.001
     tau = 1000
     cnt_updates = 0
     R_buffer = []
@@ -115,7 +115,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
         #########################
         ## End of episode
         
-        if i % 100 ==0: 
+        if i % 100 ==0 and i >0: 
             print("Saving DDQN parameters to disk.")
             torch.save(ddqn.online_model.state_dict(), directory+filename)
         

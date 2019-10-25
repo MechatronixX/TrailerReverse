@@ -127,6 +127,7 @@ def sample_batch_and_calculate_loss(ddqn, replay_buffer, batch_size, gamma):
     # YOUR CODE HERE
     
     #TODO: Something should have no_grad() here
+    # with torch.no_grad():
     q_online_next = ddqn.online_model(next_state)
     q_offline_next = ddqn.offline_model(next_state)
     q_online_curr = ddqn.online_model(curr_state)
