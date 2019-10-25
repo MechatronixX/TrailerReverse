@@ -147,8 +147,8 @@ def main():
             
 ###############################################################################
 ########### This is just a demonstration 
-            velocity = 0.1
-            steering_percentage = -0.2
+            velocity = -np.sin(step_number/1e3*np.pi)
+            steering_percentage = np.sin(step_number/1e4*np.pi)
 ###############################################################################
             
             velocity_queue.put(velocity)
@@ -163,8 +163,8 @@ def main():
             
 ###############################################################################
 ########### This is just a demonstration 
-            velocity = 0.1
-            steering_percentage = -0.2
+            velocity = -np.sin(step_number/1e3*np.pi)
+            steering_percentage = np.sin(step_number/1e4*np.pi)
 ###############################################################################
             
             truck_translation,\
