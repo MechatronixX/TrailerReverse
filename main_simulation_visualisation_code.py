@@ -50,7 +50,7 @@ first_trailer_rotation = 10
 second_trailer_rotation = 10
 destination_translation = array([4.5,2.5])
 destination_rotation = 180
-number_trailers = 1
+number_trailers = 2
 
 # Size of steps
 step_size = 1e-2
