@@ -29,10 +29,12 @@ class CarTrailerParkingRevEnv(gym.Env):
                 'video.frames_per_second' : 50}
 
     def __init__(self):
+        #Define limit of the variables in the observation space. 
         high = np.array([50, 50, np.finfo(np.float32).max, 1, 1, np.pi/2, np.finfo(np.float32).max])
-        self.state = None
-        self.action_space = spaces.Discrete(6)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        
+        self.action_space = spaces.Discrete(6)
+        
         self.viewer = None
         
         self.name = "TrailerReversingDiscrete"
@@ -40,17 +42,16 @@ class CarTrailerParkingRevEnv(gym.Env):
         self.wheelbase = 2.5
         
         #Limit speed to this value (m/s)
-        self.max_speed = 1
+        self.max_speed = 0.5
         
         #Mag T seems to be force magnitude for the discrete cotntrol of velocyt
         self.mag_T = 20000
         self.kv = 1000
-        #self.dt = 0.02  # seconds between state updates
-        
-        self.dt = 0.08
+       
+        #self.dt = 0.02  # seconds between state updates 
+        self.dt = 0.1
         
         #Size of angular increase each timestep. 
-        #self.ddelta_mag = 3*np.pi/2*self.dt
         self.ddelta_mag = np.deg2rad(1)
         self.trailer_len = 2
         
@@ -66,11 +67,13 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         #Watchdog, so the vehicle doesnt wander around for too long, missing the target. 
         self.traveledDistance = 0
+        
+        #This is recalculated in the reset function. 
         self.maxTraveledDistance = 10000
         
         #Specify when timeout occurs. If the agent hasnt solved the problem within
         #this many timesteps, break the episode. 
-        self.timeOut = 2000
+        self.maxTimesteps = 2000
         
         #Reset to the initial state. 
         self.reset()
@@ -111,7 +114,7 @@ class CarTrailerParkingRevEnv(gym.Env):
         #and two of them changes the steering angle. 
         #This sseems to be the steering angle increment. 
         F = 0
-        ddelta = 0
+        
         if action ==0: 
             None 
             #Do nothing. 
@@ -128,6 +131,11 @@ class CarTrailerParkingRevEnv(gym.Env):
         elif action == 5: 
             delta -= self.ddelta_mag
             
+        #Indicate a direction change, for use in the reward function. 
+        dirChange = False     
+        if action ==1 or action ==2 or action ==3: 
+            dirChange = True
+            
         #v = v + self.dt/self.masscar * (T - self.kv*v)
         
         #if abs(v) < 0.03:
@@ -142,26 +150,31 @@ class CarTrailerParkingRevEnv(gym.Env):
         #Clamp velocity within reasonanle boundaries.     
         v = np.clip(v, -self.max_speed, self.max_speed)  
         
-        self.traveledDistance += v*self.dt
+        self.traveledDistance += np.abs(v)*self.dt
         
         delta = np.clip(delta, -np.pi/3, np.pi/3     )
        
         self.state = np.array([x, y, v, cos_theta, sin_theta, delta, theta_t], dtype=np.float32)
         
-        reward, done = self.calc_reward()
+        reward, done = self.calc_reward(dirChange)
         
+        #TODO: Here we should probably return an info dict, with information about timeout etc
+        # https://github.com/openai/gym/issues/1230
         return self.state.copy(), reward, done, {}
     
     
     def checkJackknife(self): 
         """ Returns true if the system has jackknifed. """
         state = self.state
+        
+        #TODO: Use namedtuple here instead for more typesafety
         x, y, v, cos_theta, sin_theta, delta, theta_t = state
       
         return abs(theta_t) > self.jack_knife_angle
 
-    def calc_reward(self):
+    def calc_reward(self, dirChange):
         done = False
+        
         state = self.state
         x, y, v, cos_theta, sin_theta, delta, theta_t = state
         
@@ -192,45 +205,61 @@ class CarTrailerParkingRevEnv(gym.Env):
         #dist = abs(x)   #The car distance as target. 
         
         #Try positive reward when closer to the orgin. 
-        reward = 1/(0.3 + dist)
+        #reward = 1/(0.3 + dist)
         
-        #reward = -dist*dist
+        #Squared distance might make the agent overvalue states far from target?
+        reward = -dist
+        
+        #Penalize direction changes. 
+        if dirChange:
+            reward -= 1
         
         #Let reward be trailer distance to y axis. 
         
-        done = dist < 0.3 
+        done = dist < 0.9 
         
         #Quick and dirty debug! Timeout is not a terminal state, but a state with 
         #a discounted next reward. We just do not know how to implement a timeout when using 
-        # baselines . Timeout should not be a terminal state!
-        timeOut = self.currentTimeIndex > self.timeOut
-        
-        #Abort when jackknifing, could work when reward is positive. 
-        done = done or self.check_timeout() or self.checkJackknife()
+        # baselines . Timeout should not be a terminal state! https://arxiv.org/abs/1712.00378
+       
+        #Abort when jackknifing, could work when reward is positive.
+        #or self.checkJackknife()
+        done = done or self.check_timeout() 
         
         return reward, done
 
     def reset(self):
         
+        #print('Last time index', self.currentTimeIndex)
         #Keep track if number of updates the current episode
         self.currentTimeIndex = 0
         self.traveledDistance =0
         # Set your desired initial condition:
-        init_x = 8
-        init_y = 6
-        init_rot = -10*np.pi/180
+        #init_x = 8
+        #init_y = 6
+        #init_rot = -10*np.pi/180
         
-        self.traveledDistance =0 
+        init_x = np.random.uniform(14, 16)
+        init_y = np.random.uniform(4, 8)
+        init_rot = np.random.uniform(-10*np.pi/180, 10*np.pi/180)
         
-        #Set max traveled distance as init distance to target times some magin. 
+        #Set max traveled distance before timeout as init distance to target times some margin. 
         distToTarget = np.sqrt(init_x**2 + init_y**2)
         self.maxTraveledDistance = distToTarget*3
         
+        #Calculate a reasonable timelimit too 
+        timeToTarget = distToTarget/self.max_speed
+        
+        self.maxTimesteps = timeToTarget/self.dt*3
+        #print('Timesteps lim ', self.maxTimesteps, "Dist", self.maxTraveledDistance)
         
         self.state = np.array([init_x, init_y, 0, np.cos(init_rot), np.sin(init_rot), 0, 0], dtype=np.float32)
         return self.state
     
     def reset_rand(self): 
+        """ Reset and initialize to random position. TODO: not fully implemented. """
+        
+        self.reset()
         
         #TODO: Call reset, and add some randomness 
         
@@ -239,20 +268,20 @@ class CarTrailerParkingRevEnv(gym.Env):
         init_y = np.random.uniform(4, 8)
         init_rot = np.random.uniform(-10*np.pi/180, 10*np.pi/180)
         
-        self.traveledDistance =0 
-        
-        #Set max traveled distance as init distance to target times some magin. 
-        distToTarget = np.sqrt(init_x**2 + init_y**2)
-        self.maxTraveledDistance = distToTarget*5
-        
+       
         self.state = np.array([init_x, init_y, 0, np.cos(init_rot), np.sin(init_rot), 0, 0], dtype=np.float32)
         return self.state
     
     def check_timeout(self):
-        """ Return true if the agent definitely has diverged. """
-        return self.traveledDistance > self.maxTraveledDistance
+        """ Return true if the agent definitely has diverged. We think this happens if 
+        it has traveled a too large distance, wrt. to its initial pose in relation to the target
+        or if too long time as elapsed."""
+        timeOut = self.currentTimeIndex > self.maxTimesteps
         
-    
+        lost = self.traveledDistance > self.maxTraveledDistance
+        
+        return (lost or timeOut)
+        
     
     def get_absolute_orientation_and_cog_of_truck_and_trailer(self):
         x, y, v, cos_theta, sin_theta, delta, theta_t = self.state

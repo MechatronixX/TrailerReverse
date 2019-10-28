@@ -12,7 +12,7 @@ from collections import namedtuple
 from DDQN.DDQNhelpers import *
 
 
-def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization=False, batch_size=64, gamma=.94, maxSteps = None):        
+def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization=False, batch_size=64, gamma=.94):        
     """ A loop that can be used to train a DDQN network. Will usually be somewhat application dependant,
         but this is a baseline that could/should work for the trailer-vehicle environment. """
     
@@ -20,11 +20,7 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
     env_name = "TrailerReversingDiscrete" #TODO: Should be polled from the environment. 
     directory = "./preTrained/"
     filename = './DDQN_{}.pth'.format(env_name)
-    
-    #Steps per episode . Revert to default if non argument explicitly provided. 
-    if(maxSteps == None):
-        maxSteps = 500
-    
+       
     Transition = namedtuple("Transition", ["s", "a", "r", "next_s", "t"])
     #Things we log per each time step each episode. 
     perStepLogTuple = namedtuple("perStepLog", ["Px", "Py","angleRad", "action"])
@@ -36,15 +32,16 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
     
     #Initial and final probability of taking a random action
     eps = 0.99
-    eps_end = 0.1 
+    eps_end = 0.3 
     
     #Epsilon decays this much each apisode
     #eps_decay = .01
-    eps_decay = 0.001
+    eps_decay = 0.02
     tau = 1000
     cnt_updates = 0
     R_buffer = []
     R_avg = []
+    avgSteps = 0
     
     print('Starting to train.')
     
@@ -54,12 +51,13 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
         finish_episode = False # Initialize
         ep_reward = 0 # Initialize "Episodic reward", i.e. the total reward for episode, when disregarding discount factor.
         q_buffer = []
-        steps = 0
+        steps    = 0
+        
         
         
         perStepLog = perStepLogTuple(Px =[], Py =[], action =[], angleRad = [])
         
-        while not finish_episode and steps < maxSteps:
+        while not finish_episode: #and steps < maxSteps:
            
             if enable_visualization:
                 env.render() # comment this line out if you don't want to / cannot render the environment on your system
@@ -92,7 +90,10 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
             #Timeout should not be a termination of episode, that will create partially observable markov
             #which is harder o train. 
             #nonterminal_to_buffer = not finish_episode or steps == maxSteps
-            nonterminal_to_buffer = not finish_episode 
+            
+            #So if we are at timeout, the state at hand is a non-terminal state that
+            #we should bootstrap to. 
+            nonterminal_to_buffer = not finish_episode or env.check_timeout()
             
             # Store experienced transition to replay buffer
             replay_buffer.add(Transition(s=state, a=curr_action, r=reward, next_s=new_state, t=nonterminal_to_buffer))
@@ -126,13 +127,17 @@ def train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualizatio
         # Running average of episodic rewards (total reward, disregarding discount factor)
         R_avg.append(.05 * R_buffer[i] + .95 * R_avg[i-1])  if i > 0 else  R_avg.append(R_buffer[i])
         
+        #TODO: IR filter with handling of zero 
+        avgSteps = 0.95*avgSteps + 0.05*steps if i>0 else steps 
+        #print(avgSteps, steps)
+        
         trainingLog.perStepLog.append(perStepLog)
         trainingLog.eps.append(eps)
         trainingLog.Ravg.append(R_avg[-1])
         trainingLog.R.append(ep_reward )
 
         if(i%10 == 0):
-            print('Episode: {:d}, Total Reward (running avg): {:4.0f}, Epsilon: {:.3f}'.format( i, R_avg[-1], eps))
+            print('Episode: {:d}, Episode [reward, len] (avg): [{:4.0f}, {:2.1f}],  Epsilon: {:.3f}'.format( i, R_avg[-1],avgSteps, eps))
         #print('Episode: {:d}, Total Reward (running avg): {:4.0f} ({:.2f}) Epsilon: {:.3f}, Avg Q: {:.4g}'.format(i, ep_reward, R_avg[-1], eps, np.mean(np.array(q_buffer))))
         
         # If running average > 195 (close to 200), the task is considered solved

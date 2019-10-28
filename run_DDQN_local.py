@@ -21,7 +21,7 @@ import torch
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 
 import time
-num_episodes = 4
+num_episodes = 3
 #env = gym.make("CartPole-v0")
 
 env = CarTrailerParkingRevEnv()
@@ -48,7 +48,9 @@ for i in range(num_episodes):
         state = state[None,:]
         terminal = False # reset terminal flag
         tot_reward =0
-        for i in range(maxSteps):
+        done = False 
+        
+        while not done: 
             env.render()
             time.sleep(Ts_anim)
             with torch.no_grad():
@@ -57,15 +59,14 @@ for i in range(num_episodes):
             #action = np.random.choice(num_actions, p=policy)
             #Act with the greedy policy. 
             action= np.argmax(q_values.squeeze())
-            state, reward, terminal, _ = env.step(action) # take one step in the evironment
+            state, reward, done, _ = env.step(action) # take one step in the evironment
             tot_reward += reward 
             state = state[None,:]
             
-            if terminal: 
+            if done and not env.check_timeout(): 
                 print('Reached terminal state. Total reward: ', tot_reward)
                 break
-            
-            if(i >= maxSteps -1): 
+            elif env.check_timeout(): 
                  print('Timeout. Total reward: ', tot_reward)
                 
 # close window

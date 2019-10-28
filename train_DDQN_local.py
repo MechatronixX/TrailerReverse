@@ -26,7 +26,7 @@ from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 enable_visualization = False
 
 #Load a pretrained model from disc and continue training it 
-usePretrained = True
+usePretrained = False
 
 #Actions are full turn left, straight, full turn right
 #actions = (-1,0,1)
@@ -45,8 +45,9 @@ print('Training an environment with number of actions: ', num_actions, 'Number o
 #Training hyperparameters. 
 num_episodes = 1000
 batch_size = 128
-gamma = .94
-learning_rate = 1e-3
+#gamma = .94
+gamma = 0.999 #This system has long time dependencies, so set gamma close to 1
+learning_rate = 1e-4
 
 # Object holding our online / offline Q-Networks
 ddqn = DoubleQLearningModel(device, num_states, num_actions, learning_rate)
@@ -64,20 +65,13 @@ if usePretrained:
     
     print(loadResult1,loadResult2)
     
-#We should train for a time long enough to converge to our target. 
-initState = env.state
-distToTarget = np.sqrt( initState[0]**2 + initState[1]**2  )
-timeToTarget = env.max_speed/distToTarget*200   #Nominal birdsflight time at max speed times margin
-maxSteps = np.round(timeToTarget/env.dt) 
-
-print('Will train each episode for (in real time)', timeToTarget, ' seconds implying ', maxSteps, ' discrete steps') 
 
 # Create replay buffer, where experience in form of tuples <s,a,r,s',t>, gathered from the environment is stored 
 # for training
 replay_buffer = ExperienceReplay(device, num_states)
 
 # Train
-trainingLog = train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization, batch_size, gamma, maxSteps)
+trainingLog = train_loop_ddqn( env, ddqn, replay_buffer, num_episodes, enable_visualization, batch_size, gamma)
 
 
 
