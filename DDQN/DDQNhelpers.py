@@ -125,14 +125,14 @@ def sample_batch_and_calculate_loss(ddqn, replay_buffer, batch_size, gamma):
     # Input shape (batch_size, num_states). Output shape (batch_size, num_actions).
 
     # YOUR CODE HERE
-    
-    #TODO: Something should have no_grad() here
-    # with torch.no_grad():
-    q_online_next = ddqn.online_model(next_state)
-    q_offline_next = ddqn.offline_model(next_state)
     q_online_curr = ddqn.online_model(curr_state)
+    #TODO: Seferal variables should have no_grad() here for faster calculations. 
+    with torch.no_grad():
+        q_online_next = ddqn.online_model(next_state)
+        q_offline_next = ddqn.offline_model(next_state)
+        q_target = calculate_q_targets(q_online_next, q_offline_next, reward, nonterminal, gamma)    
     
-    q_target = calculate_q_targets(q_online_next, q_offline_next, reward, nonterminal, gamma)
+    
     #q_target.
     loss = ddqn.calc_loss(q_online_curr, q_target.detach(), curr_action)
 
