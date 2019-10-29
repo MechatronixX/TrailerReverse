@@ -10,11 +10,11 @@ def callback(_locals, _globals):
 
 def train():
     # multiprocess environment
-    n_cpu = 10
+    n_cpu = 4
     env = SubprocVecEnv([lambda: Reverse_variable_trailer_number_environment() for i in range(n_cpu)])
 
     model = PPO2(MlpPolicy, env, verbose=1)
-    model.learn(total_timesteps=np.int(1e9), log_interval=10, callback = callback)
+    model.learn(total_timesteps=np.int(1e6), log_interval=10, callback = callback)
     model.save("ppo2_trailer")
     
 if __name__ == "__main__":

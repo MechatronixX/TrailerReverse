@@ -19,7 +19,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         self.destination_rotation = 0
         self.number_trailers = 2
         
-        visualisation_shapes = load_shapes(self.number_trailers)
+        self.visualisation_shapes = load_shapes(self.number_trailers)
         
         self.yard_shape,\
         self.drive_wheel_shape,\
@@ -47,7 +47,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         self.hitch_translation_second_trailer,\
         self.maximal_first_trailer_rotation,\
         self.maximal_second_trailer_rotation,\
-        self.maximal_both_trailers_rotation= visualisation_shapes
+        self.maximal_both_trailers_rotation= self.visualisation_shapes
         
         self.maximal_velocity = 1
         self.maximal_steering_percentage = 1
@@ -76,7 +76,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         self.jackknife_angle = 90
         self.jackknive_number = 0
         
-        self.visualisation = False
+        self.visualize_combination = None
         
         self.velocity_old = 0
         self.velocity_new = 0
@@ -98,10 +98,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         velocity,\
         steering_percentage = self.state
         
-        if self.visualisation:
-            self.visualize_combination = Visualize_combination(visualisation_shapes)
-        
-        self.simulate_combination = Simulate_combination(visualisation_shapes,\
+        self.simulate_combination = Simulate_combination(self.visualisation_shapes,\
                                                          self.number_trailers,\
                                                          self.step_size)
         
@@ -162,8 +159,8 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         
         reward, done = self.calc_reward()
         
-        if self.visualisation:          
-            self.visualize()
+#        if self.visualisation:          
+#            self.visualize()
             
         return self.state, reward, done, {}
     
@@ -241,6 +238,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         
         # The reward is the lower, the higher the distance to the target is 
         reward = -1e3*(translation_error)**2
+        # reward = -translation_error
         
         # The reward is the lower, the higher the travelled distance is 
         if velocity > 0:
@@ -268,7 +266,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
             reward -= 1e18
             done = True
         
-        if translation_error < 0.5:
+        if translation_error < 0.1:
             # Christmas bonus
             reward += 1e9
             # The reward is the lower, the higher the rotation error of the trailer is
@@ -337,6 +335,13 @@ class Reverse_variable_trailer_number_environment(gym.Env):
     
     def check_timeout(self):
         return self.traveled_distance > self.maximal_traveled_distance
+    
+    
+    def render(self):
+        if self.visualize_combination == None:
+            self.visualize_combination = Visualize_combination(self.visualisation_shapes)
+            
+        self.visualize()
     
     def get_absolute_translation_and_rotation_of_truck_and_trailer(self):
         truck_translation_x,\
