@@ -44,7 +44,7 @@ from helperfunctions.load_shapes_code import *
 # This should not influence the simulation.
 multicore = False
 # Initial state variables
-truck_translation = array([np.float(20),np.float(3.5)])
+truck_translation = array([20,3.5],dtype=np.float32)
 truck_rotation = 0
 first_trailer_rotation = 10
 second_trailer_rotation = 10
@@ -55,9 +55,9 @@ number_trailers = 1
 # Size of steps
 step_size = 1e-2
 # Total number of steps
-number_steps = 1e5
+number_steps = 1e6
 # Plotting interval in steps
-plotting_interval = 1e2
+plotting_interval = 1e1
 
 ###############################################################################
 
@@ -148,7 +148,7 @@ def main():
 ###############################################################################
 ########### This is just a demonstration 
             velocity = -np.sin(step_number/1e3*np.pi)
-            steering_percentage = np.sin(step_number/1e4*np.pi)
+            steering_percentage = np.sin(step_number/5e3*np.pi)
 ###############################################################################
             
             velocity_queue.put(velocity)
@@ -164,7 +164,7 @@ def main():
 ###############################################################################
 ########### This is just a demonstration 
             velocity = -np.sin(step_number/1e3*np.pi)
-            steering_percentage = np.sin(step_number/1e4*np.pi)
+            steering_percentage = np.sin(step_number/5e3*np.pi)
 ###############################################################################
             
             truck_translation,\

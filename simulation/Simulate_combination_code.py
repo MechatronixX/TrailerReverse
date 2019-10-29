@@ -76,65 +76,18 @@ class Simulate_combination():
         self.maximal_second_trailer_rotation,\
         self.maximal_both_trailers_rotation= visualisation_shapes
         
-        #This seems to be the initialstate. 
         self.truck_translation          = truck_translation
         self.truck_rotation             = truck_rotation
         self.first_trailer_rotation     = first_trailer_rotation
         self.second_trailer_rotation    = second_trailer_rotation
         
-        # Save value for reset later. Everything is written reference in python it seems
-        # even this simple scalars! Therefore we need do deepcopy it explicitly
         self.init_truck_translation         = copy.deepcopy(truck_translation)
         self.init_truck_rotation            = copy.deepcopy(truck_rotation)
         self.init_first_trailer_rotation    = copy.deepcopy(first_trailer_rotation)
         self.init_second_trailer_rotation   = copy.deepcopy(second_trailer_rotation)
         
         self.number_trailers = number_trailers
-        #Simulation stepsize, for discrete integration.
-        self.step_size = step_size
-    
-    def reset(self):
-        """Reset simulation to init state. The init state is defined in the instantiation of this object."""
-           #Save value for reset later. 
-        self.truck_translation          = copy.deepcopy(self.init_truck_translation)
-        self.truck_rotation             = copy.deepcopy(self.init_truck_rotation)
-        self.first_trailer_rotation     = copy.deepcopy(self.init_first_trailer_rotation)
-        self.second_trailer_rotation    = copy.deepcopy(self.init_second_trailer_rotation)
-        
-        return self.get_state()
-        
-    def get_state(self):
-        """ Returns the current state, as per the current state definition for this system. """
-        posX  = self.truck_translation[0]
-        posY = self.truck_translation[1]
-        
-        new_state = array([posX, posY, 
-                     self.truck_rotation, 
-                     self.first_trailer_rotation, 
-                     self.second_trailer_rotation ])
-        return new_state
-        
-        
-    def step(self, a): 
-        """Convenience function that updates the current state and returns a reward.   """
-        
-        #Right now reward is simply squared distance to origin. 
-        reward = -(self.truck_translation[0]**2  + self.truck_translation[1]**2)
-        
-        dist = np.sqrt(np.abs(reward))
-        
-        self.run(a[0], a[1] )
-        
-        new_state = self.get_state() 
-        #If we are 2 meters within the origin, break  
-        finish_episode = dist < 2
-        
-        #Try to add a heapload of reward if we finish the episode. 
-        if(finish_episode): 
-            reward = 10000
-        
-        return new_state, reward, finish_episode
-        
+        self.step_size = step_size        
 
     def run(self,velocity,steering_percentage):
         """ Update the system one step given current velocity and steering angle. """
@@ -167,7 +120,6 @@ class Simulate_combination():
             rotation_truck = 0      
             ## Truck movement
             if steering_percentage != 0:
-                #Seems to be calculating the angular increement by analyzing the position increment? 
                 lock = self.wheelbase_truck/np.tan(np.deg2rad(steering_angle))
                 rotation_truck = np.rad2deg(np.arcsin(distance/lock))/2
             self.truck_rotation += rotation_truck
@@ -178,8 +130,6 @@ class Simulate_combination():
             step_rotation_truck = self.truck_rotation-old_truck_rotation
             old_first_trailer_rotation = self.first_trailer_rotation
             
-            #TODO: It seems this function updates the states recursively, but without 
-            #      using a differential equation directly. WHat is this approach called? 
             if self.number_trailers >= 1:
             
                 ## first_trailer movement
