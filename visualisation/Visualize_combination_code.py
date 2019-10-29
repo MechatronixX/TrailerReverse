@@ -43,7 +43,6 @@ class Visualize_combination():
     def __init__(self,visualisation_shapes):
         
         self.yard_shape,\
-        self.destination_shape,\
         self.drive_wheel_shape,\
         self.hitch_radius,\
         self.item_translations_truck,\
@@ -97,17 +96,31 @@ class Visualize_combination():
         number_trailers = visualisation_element
         
         ## Destination plotting
-        destination_rectangle = patches.Rectangle(-self.destination_shape/2,\
-                                                  self.destination_shape[0],\
-                                                  self.destination_shape[1],\
-                                                  color="red",\
-                                                  alpha=0.50)
+        if number_trailers == 0:
+            destination_rectangle = patches.Rectangle(-self.rotation_center_truck,\
+                                                      self.truck_shape[0],\
+                                                      self.truck_shape[1],\
+                                                      color="red",\
+                                                      alpha=0.50)
+        elif number_trailers == 2:
+            destination_rectangle = patches.Rectangle(-self.rotation_center_second_trailer,\
+                                                      self.second_trailer_shape[0],\
+                                                      self.second_trailer_shape[1],\
+                                                      color="red",\
+                                                      alpha=0.50)
+        else:
+            destination_rectangle = patches.Rectangle(-self.rotation_center_first_trailer,\
+                                                      self.first_trailer_shape[0],\
+                                                      self.first_trailer_shape[1],\
+                                                      color="red",\
+                                                      alpha=0.50)
+            
         rotation_destination = transforms.Affine2D().rotate_deg(destination_rotation)
         translation_destination = transforms.Affine2D().translate(destination_translation[0],\
                                                                   destination_translation[1])
         destination_transformation = rotation_destination\
-              +translation_destination\
-              +self.ax.transData
+                                     +translation_destination\
+                                     +self.ax.transData
         destination_rectangle.set_transform(destination_transformation)
         self.ax.add_patch(destination_rectangle)
         

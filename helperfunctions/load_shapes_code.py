@@ -24,9 +24,6 @@ def load_shapes(number_trailers):
     # Shape of the yard
     yard_shape = array([27,5])
     
-    # Shape of the destination, here chosen equals to the shape of the second trailer
-    destination_shape = array([9,2])
-    
     # Shape of some truck, first and second trailer items
     drive_wheel_shape = array([0.8,0.6])
     hitch_radius = 0.1
@@ -169,7 +166,6 @@ def load_shapes(number_trailers):
     maximal_both_trailers_rotation = 200
         
     visualisation_shapes = [yard_shape,\
-                        destination_shape,\
                         drive_wheel_shape,\
                         hitch_radius,\
                         item_translations_truck,\
