@@ -1,245 +1,353 @@
 import gym
 import numpy as np
-from scipy.integrate import odeint
+from gym import spaces
 
 from visualisation.Visualize_combination_code import *
-from helperfunctions.constant_rotation_code import *
+from simulation.Simulate_combination_code import *
 from helperfunctions.load_shapes_code import *
 
-class CarTrailerParkingRevEnv(gym.Env):
+class Reverse_variable_trailer_number_environment(gym.Env):
     
     metadata = {'render.modes': ['human'],
                 'video.frames_per_second' : 25}
 
     def __init__(self):
-        high = np.array([50, 50, np.finfo(np.float32).max, 1, 1, np.pi/2, np.finfo(np.float32).max])
-        self.state = None
+        
+        self.name = "Reverse_variable_trailer_number"
+        
+        self.destination_translation = np.array([2.5,2.5])
+        self.destination_rotation = 0
+        self.number_trailers = 2
+        
+        visualisation_shapes = load_shapes(self.number_trailers)
+        
+        self.yard_shape,\
+        self.drive_wheel_shape,\
+        self.hitch_radius,\
+        self.item_translations_truck,\
+        self.truck_shape,\
+        self.cab_shape,\
+        self.wheel_shape,\
+        self.rotation_center_truck,\
+        self.item_steering_rotations_truck,\
+        self.hitch_translation_truck,\
+        self.wheelbase_truck,\
+        self.maximal_steering_angle,\
+        self.item_translations_first_trailer,\
+        self.first_trailer_shape,\
+        self.shaft_shape,\
+        self.rotation_center_first_trailer,\
+        self.item_steering_rotations_first_trailer,\
+        self.hitch_translation_first_trailer_truck,\
+        self.hitch_translation_first_trailer_second_trailer,\
+        self.item_translations_second_trailer,\
+        self.second_trailer_shape,\
+        self.rotation_center_second_trailer,\
+        self.item_steering_rotations_second_trailer,\
+        self.hitch_translation_second_trailer,\
+        self.maximal_first_trailer_rotation,\
+        self.maximal_second_trailer_rotation,\
+        self.maximal_both_trailers_rotation= visualisation_shapes
+        
+        self.maximal_velocity = 1
+        self.maximal_steering_percentage = 1
+        
+        high = np.array([self.yard_shape[0],\
+                         self.yard_shape[1],\
+                         360,\
+                         360,\
+                         360,\
+                         self.maximal_velocity,\
+                         self.maximal_steering_percentage])
+        
         self.action_space = spaces.Discrete(6)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
         self.viewer = None
+
+        # Size of steps
+        self.step_size = 1e-2
+        # Plotting interval in steps
+        self.plotting_number = 1
+        self.plotting_interval = 1e1
         
-        self.name = "TrailerReversingDiscrete"
-        self.masscar = 1000
-        self.wheelbase = 2.5
+        self.velocity_increment = 0.1
+        self.steering_percentage_increment = 0.1
         
-        #Limit speed to this value (m/s)
-        self.max_speed = 1
+        self.jackknife_angle = 90
+        self.jackknive_number = 0
         
-        #Mag T seems to be force magnitude for the discrete cotntrol of velocyt
-        self.mag_T = 20000
-        self.kv = 1000
-        #self.dt = 0.02  # seconds between state updates
+        self.visualisation = False
         
-        self.dt = 0.08
-        
-        #Size of angular increase each timestep. 
-        #self.ddelta_mag = 3*np.pi/2*self.dt
-        self.ddelta_mag = np.deg2rad(1)
-        self.trailer_len = 2
-        
-        #This defines the square box in the rendering? 
-        self.target_position = np.array([self.trailer_len/2 + 2, 6])
-        self.bar_len = 1
-        self.trailer_bar_combo_len = self.trailer_len + self.bar_len
-        self.jack_knife_angle = np.pi/2
-        self.world_width = 20
-        self.world_heigth = 12
-        
-        self.currentTimeIndex = 0
+        self.velocity_old = 0
+        self.velocity_new = 0
         
         #Watchdog, so the vehicle doesnt wander around for too long, missing the target. 
         self.traveled_distance = 0
-        self.maximal_traveled_distance = 10000
+        self.maximal_traveled_distance = 0
         
-        #Specify when timeout occurs. If the agent hasnt solved the problem within
-        #this many timesteps, break the episode. 
-        self.timeOut = 2000
+        self.state = None
         
         #Reset to the initial state. 
         self.reset()
         
-        #######################################################################
+        truck_translation_x,\
+        truck_translation_y,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
         
-        number_trailers = 2
-        visualisation_shapes = load_shapes(number_trailers)
-        self.visualize_combination = Visualize_combination(visualisation_shapes)
+        if self.visualisation:
+            self.visualize_combination = Visualize_combination(visualisation_shapes)
+        
+        self.simulate_combination = Simulate_combination(visualisation_shapes,\
+                                                         self.number_trailers,\
+                                                         self.step_size)
         
     def step(self, action):
-        
-        self.currentTimeIndex+=1
-        
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         
-        #Sine/cos of the angle are in the state vector, hmm. 
-        x, y, v, cos_theta, sin_theta, delta, theta_t = self.state
-        dtheta = v*np.tan(delta)/self.wheelbase
+        truck_translation_x,\
+        truck_translation_y,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
         
-        ## Integration of the differential equations. This seems to be a vector with the derivatives. 
-        def s_cont_dot(s_cont, t):
-            return np.array([v*s_cont[2], 
-                             v*s_cont[3], 
-                             -dtheta*s_cont[3], 
-                             dtheta*s_cont[2],
-                             -dtheta + v/self.trailer_bar_combo_len*np.sin(-s_cont[4])])
+        truck_translation = np.array([truck_translation_x,truck_translation_y])
         
+        truck_translation,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation = self.simulate_combination.run(truck_translation,\
+                                                                truck_rotation,\
+                                                                first_trailer_rotation,\
+                                                                second_trailer_rotation,\
+                                                                velocity,\
+                                                                steering_percentage)
+        self.velocity_old = velocity
         
-        s_cont = np.array([x, y, cos_theta, sin_theta, theta_t], dtype=np.float32)
-        t_array = np.array([0, self.dt])
-        s_cont = odeint(s_cont_dot, s_cont, t_array)[1] # integration
-        x = s_cont[0]
-        y = s_cont[1]
-        cos_theta = s_cont[2]
-        sin_theta = s_cont[3]
-        theta_t = s_cont[4]
-        # To ensure that cos_theta^2 + sin_theta^2 = 1. (I tested without it and it doesn't diverge, but still it doesn't hurt)
-        theta = np.arctan2(sin_theta, cos_theta)
-        cos_theta = np.cos(theta)
-        sin_theta = np.sin(theta)
-        
-        #It seems there are for discrete actions. Two of them changes the vehicle velocity, 
-        #and two of them changes the steering angle. 
-        #This sseems to be the steering angle increment. 
-        F = 0
-        ddelta = 0
-        if action ==0: 
-            None 
-            #Do nothing. 
-        elif action==1: 
-            v = 0 #Brake
+        if action == 0: 
+            None
+        elif action == 1: 
+            velocity -= self.velocity_increment
         elif action == 2:
-            v = self.max_speed #Forward
-            F = 1
-        elif action == 3:
-            v =-self.max_speed #Reverse
-            F = -1
+            velocity += self.velocity_increment
+        elif action == 3: 
+            steering_percentage += self.steering_percentage_increment
         elif action == 4: 
-            delta += self.ddelta_mag
-        elif action == 5: 
-            delta -= self.ddelta_mag
+            steering_percentage -= self.steering_percentage_increment
             
-        #v = v + self.dt/self.masscar * (T - self.kv*v)
-        
-        #if abs(v) < 0.03:
-        #    v = 0
-            
-        #If we jackknife, imagine a squeeking sound and the car has to stop. This implies
-        #more long term penaly as we have to accelerate again now. If force T is larger than 0
-        #we are trying to drive foward to avoid the jacknife, so dont zero velocity out then.
-        if (self.checkJackknife() and F <= 0 ): 
-            v =0 
+        if (self.check_jackknife() and velocity <= 0 ): 
+            velocity = 0 
             
         #Clamp velocity within reasonanle boundaries.     
-        v = np.clip(v, -self.max_speed, self.max_speed)  
+        velocity = np.clip(velocity,-self.maximal_velocity,self.maximal_velocity)
         
-        self.traveled_distance += v*self.dt
+        self.velocity_new = velocity
         
-        delta = np.clip(delta, -np.pi/3, np.pi/3     )
+        self.traveled_distance += velocity*self.step_size
+        
+        steering_percentage = np.clip(steering_percentage,-self.maximal_steering_percentage,self.maximal_steering_percentage)
        
-        self.state = np.array([x, y, v, cos_theta, sin_theta, delta, theta_t], dtype=np.float32)
+        self.state = np.array([truck_translation[0],\
+                               truck_translation[1],\
+                               truck_rotation,\
+                               first_trailer_rotation,\
+                               second_trailer_rotation,\
+                               velocity,\
+                               steering_percentage])
         
         reward, done = self.calc_reward()
         
-        return self.state.copy(), reward, done, {}
+        if self.visualisation:          
+            self.visualize()
+            
+        return self.state, reward, done, {}
     
-    
-    def checkJackknife(self): 
-        """ Returns true if the system has jackknifed. """
-        state = self.state
-        x, y, v, cos_theta, sin_theta, delta, theta_t = state
+    def check_jackknife(self): 
+        truck_translation_x,\
+        truck_translation_y,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
+        
+        jackknive = np.abs(first_trailer_rotation) >= self.jackknife_angle or\
+                           np.abs(second_trailer_rotation) >= self.jackknife_angle
       
-        return abs(theta_t) > self.jack_knife_angle
-
+        return jackknive
+    
+    def check_out_of_bounds(self): 
+        truck_translation_x,\
+        truck_translation_y,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
+        
+        truck_absolute_translation,\
+        truck_absolute_rotation,\
+        first_trailer_absolute_translation,\
+        first_trailer_absolute_rotation,\
+        second_trailer_absolute_translation,\
+        second_trailer_absolute_rotation = self.get_absolute_translation_and_rotation_of_truck_and_trailer()
+        
+        out_of_bounds = (truck_absolute_translation[0] > self.yard_shape[0]) or\
+                        (truck_absolute_translation[0] < 0) or\
+                        (truck_absolute_translation[1] > self.yard_shape[1]) or\
+                        (truck_absolute_translation[1] < 0) or\
+                        (first_trailer_absolute_translation[0] > self.yard_shape[0]) or\
+                        (first_trailer_absolute_translation[0] < 0) or\
+                        (first_trailer_absolute_translation[1] > self.yard_shape[1]) or\
+                        (first_trailer_absolute_translation[1] < 0) or\
+                        (second_trailer_absolute_translation[0] > self.yard_shape[0]) or\
+                        (second_trailer_absolute_translation[0] < 0) or\
+                        (second_trailer_absolute_translation[1] > self.yard_shape[1]) or\
+                        (second_trailer_absolute_translation[1] < 0)
+                        
+        return out_of_bounds
+    
     def calc_reward(self):
         done = False
-        x, y, v, cos_theta, sin_theta, delta, theta_t = self.state
         
-        car_cog, car_abs_rot, trailer_cog, trailer_abs_rot = self.get_absolute_translation_and_rotation_of_truck_and_trailer()
+        truck_translation_x,\
+        truck_translation_y,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
         
-        #baseReward = -(trailer_cog[0]**2)
-        #baseReard = -(np.abs(trailer_cog[0]))
+        reward = 0
         
-        #Check if we jackknifed and induce a huge penalty for it. 
-        #jackknife = self.checkJackknife()
+        truck_absolute_translation,\
+        truck_absolute_rotation,\
+        first_trailer_absolute_translation,\
+        first_trailer_absolute_rotation,\
+        second_trailer_absolute_translation,\
+        second_trailer_absolute_rotation = self.get_absolute_translation_and_rotation_of_truck_and_trailer()
         
-        #if jackknife: 
-        #    reward = baseReward*100
-        #else:
-        #reward = baseReward
+        if self.number_trailers == 0:
+            translation_error = np.linalg.norm(truck_absolute_translation-self.destination_translation)
+        elif self.number_trailers == 2:
+            translation_error = np.linalg.norm(second_trailer_absolute_translation-self.destination_translation)
+        else:
+            translation_error = np.linalg.norm(first_trailer_absolute_translation-self.destination_translation)
         
+        # The reward is the lower, the higher the distance to the target is 
+        reward = -1e3*(translation_error)**2
         
-        #if abs(theta_t) >= self.jack_knife_angle:
-        #    done = True
-        #if out_of_bounds([car_cog, trailer_cog], [180/np.pi*car_abs_rot, 180/np.pi*trailer_abs_rot],
-        #                 yard_shape = np.array([self.world_width, self.world_heigth])):
-        #    done = True
+        # The reward is the lower, the higher the travelled distance is 
+        if velocity > 0:
+            reward -= 1e-2*self.traveled_distance
+        else:
+            reward -= 1e-1*self.traveled_distance
         
+        # The reward is the lower, the higher the number of direction changes is
+        direction_change = self.velocity_old*self.velocity_new < 0
+        if direction_change:
+            reward -= 1e3
         
-        #TODO: Should rather be the wheel axis center?? 
-        #dist = np.abs(trailer_cog[0])
-        dist = np.sqrt(trailer_cog[0]**2 + trailer_cog[1]**2 )
-        #dist = abs(x)   #The car distance as target. 
+        # Check if we jackknifed and induce a huge penalty for it
+        jackknife = self.check_jackknife()
+        if jackknife: 
+            reward -= 1e3
+            self.jackknive_number += 1
+            
+            if self.jackknive_number > 100:
+                done = True
+                reward -= 1e6
         
-        #Try positive reward when closer to the orgin. 
-        reward = 1/(0.3 + dist)
+        # Checks if the trailer is out of bounds
+        if self.check_out_of_bounds():
+            reward -= 1e18
+            done = True
         
-        #reward = -dist*dist
-        
-        #Let reward be trailer distance to y axis. 
-        
-        done = dist < 0.3 
-        
-        #Quick and dirty debug! Timeout is not a terminal state, but a state with 
-        #a discounted next reward. We just do not know how to implement a timeout when using 
-        # baselines . Timeout should not be a terminal state!
-        timeOut = self.currentTimeIndex > self.timeOut
-        
-        #Abort when jackknifing, could work when reward is positive. 
-        done = done or self.check_timeout() or self.checkJackknife()
-        
+        if translation_error < 0.5:
+            # Christmas bonus
+            reward += 1e9
+            # The reward is the lower, the higher the rotation error of the trailer is
+            if self.number_trailers == 0:
+                reward -= 1e3*np.abs(truck_absolute_rotation)
+            elif self.number_trailers == 2:
+                reward -= 1e3*np.abs(second_trailer_absolute_rotation)
+            else:
+                reward -= 1e3*np.abs(first_trailer_absolute_rotation)
+            done = True
+            
+        if self.check_timeout():
+            reward -= 1e9
+            done = True
+            
+        if done:
+            print("done")
+            
         return reward, done
 
     def reset(self):
         
-        self.currentTimeIndex = 0
-        
-        initial_truck_translation = array([20,3.5],dtype=np.float32)
+        initial_truck_translation = np.array([15,2.5],dtype=np.float32)
         initial_truck_rotation = 0
         initial_first_trailer_rotation = 0
         initial_second_trailer_rotation = 0
+        initial_velocity = 0
+        initial_steering_percentage = 0
         
         self.traveled_distance = 0 
         
-        distance_to_target = np.norm(initial_truck_translation-self.destination_translation)
+        distance_to_target = np.linalg.norm(initial_truck_translation-self.destination_translation)
         self.maximal_traveled_distance = distance_to_target*2
         
-        self.state = np.array([initial_truck_translation,initial_truck_rotation,initial_first_trailer_rotation,initial_second_trailer_rotation],dtype=np.float32)
+        self.state = np.array([initial_truck_translation[0],\
+                               initial_truck_translation[1],\
+                               initial_truck_rotation,\
+                               initial_first_trailer_rotation,\
+                               initial_second_trailer_rotation,\
+                               initial_velocity,\
+                               initial_steering_percentage])
         return self.state
     
     def reset_random(self): 
-        
-        self.currentTimeIndex = 0
         
         random_initial_truck_translation = [np.random.uniform(14, 16),np.random.uniform(4, 8)]
         random_initial_truck_rotation = np.random.uniform(np.deg2rad(-180),np.deg2rad(180))
         random_initial_first_trailer_rotation = np.random.uniform(np.deg2rad(-90),np.deg2rad(90))
         random_initial_second_trailer_rotation = np.random.uniform(np.deg2rad(-90),np.deg2rad(90))
+        initial_velocity = 0
+        initial_steering_percentage = 0
         
         self.traveled_distance = 0 
         
-        distance_to_target = np.norm(random_initial_truck_translation-self.destination_translation)
+        distance_to_target = np.linalg.norm(random_initial_truck_translation-self.destination_translation)
         self.maximal_traveled_distance = distance_to_target*2
         
-        self.state = np.array([random_initial_truck_translation,random_initial_truck_rotation,random_initial_first_trailer_rotation,random_initial_second_trailer_rotation],dtype=np.float32)
+        self.state = np.array([random_initial_truck_translation[0],\
+                               random_initial_truck_translation[1],\
+                               random_initial_truck_rotation,\
+                               random_initial_first_trailer_rotation,\
+                               random_initial_second_trailer_rotation,\
+                               initial_velocity,\
+                               initial_steering_percentage])
         return self.state
     
     def check_timeout(self):
         return self.traveled_distance > self.maximal_traveled_distance
     
     def get_absolute_translation_and_rotation_of_truck_and_trailer(self):
-        truck_translation,\
+        truck_translation_x,\
+        truck_translation_y,\
         truck_rotation,\
         first_trailer_rotation,\
-        second_trailer_rotation = self.state
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
+        
+        truck_translation = np.array([truck_translation_x,truck_translation_y])
         
         hitch_vector_truck = constant_rotation(self.hitch_translation_truck,\
                                                truck_rotation)
@@ -258,23 +366,40 @@ class CarTrailerParkingRevEnv(gym.Env):
         truck_absolute_rotation = truck_rotation
         first_trailer_absolute_translation = truck_absolute_translation\
                                              +hitch_vector_truck\
-                                             +hitch_vector_first_trailer_truck
+                                             -hitch_vector_first_trailer_truck
         first_trailer_absolute_rotation = truck_absolute_rotation\
                                           +first_trailer_rotation
         second_trailer_absolute_translation = first_trailer_absolute_translation\
                                               +hitch_vector_first_trailer_second_trailer\
-                                              +hitch_vector_second_trailer
+                                              -hitch_vector_second_trailer
         second_trailer_absolute_rotation = first_trailer_absolute_rotation\
                                            +second_trailer_rotation
+                                           
+        absolute_translation_and_rotation = [truck_absolute_translation,\
+                                             truck_absolute_rotation,\
+                                             first_trailer_absolute_translation,\
+                                             first_trailer_absolute_rotation,\
+                                             second_trailer_absolute_translation,\
+                                             second_trailer_absolute_rotation]
         
-        return truck_absolute_translation,truck_absolute_rotation,first_trailer_absolute_translation,first_trailer_absolute_rotation,second_trailer_absolute_translation,second_trailer_absolute_rotation
+        return absolute_translation_and_rotation
         
     def visualize(self):
-        visualisation_element = [self.truck_translation,\
-                                 self.truck_rotation,\
-                                 self.first_trailer_rotation,\
-                                 self.second_trailer_rotation,\
-                                 self.steering_percentage,\
+        truck_translation_x,\
+        truck_translation_y,\
+        truck_rotation,\
+        first_trailer_rotation,\
+        second_trailer_rotation,\
+        velocity,\
+        steering_percentage = self.state
+        
+        truck_translation = np.array([truck_translation_x,truck_translation_y])
+        
+        visualisation_element = [truck_translation,\
+                                 truck_rotation,\
+                                 first_trailer_rotation,\
+                                 second_trailer_rotation,\
+                                 steering_percentage,\
                                  self.destination_translation,\
                                  self.destination_rotation,\
                                  self.number_trailers]

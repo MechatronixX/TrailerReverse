@@ -11,10 +11,6 @@ from stable_baselines import PPO2
 
 from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
 
-
-
-# Enjoy trained agent
-
 def run():
     model = PPO2.load("ppo2_trailer")
     n_cpu = 8
