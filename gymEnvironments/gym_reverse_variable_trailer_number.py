@@ -60,7 +60,7 @@ class Reverse_variable_trailer_number_environment(gym.Env):
                          self.maximal_velocity,\
                          self.maximal_steering_percentage])
         
-        self.action_space = spaces.Discrete(6)
+        self.action_space = spaces.Discrete(5)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
         self.viewer = None
 
