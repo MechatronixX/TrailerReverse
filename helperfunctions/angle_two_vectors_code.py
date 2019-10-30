@@ -23,9 +23,14 @@ import numpy as np
 from numpy.linalg import norm
 
 def angle_two_vectors(vector1,vector2):
-    if norm(vector1)*norm(vector1) != 0:
+    if norm(vector1)*norm(vector2) != 0:
         angle = np.rad2deg(np.arccos(np.dot(vector1,vector2)/(norm(vector1)*norm(vector2))))
-    else:
+    elif norm(vector1) == 0:
+        angle = np.rad2deg(np.arccos(np.dot(vector1,vector2)/(norm(vector2))))
+    elif norm(vector2) == 0:
+        angle = np.rad2deg(np.arccos(np.dot(vector1,vector2)/(norm(vector1))))
+    else: angle = 0
+    if np.isnan(angle):
         angle = 0
     return angle
 

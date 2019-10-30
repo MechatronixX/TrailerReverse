@@ -1,3 +1,115 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+#####################################################################################
+# Reverse_variable_trailer_number_environment()                                     #  
+#                                                                                   #
+# This class initialises the open ai gym environment. All functions are implemented #
+# such that open ai gym compatible algorithms should work out of the box            #                
+# Inputs: _                                                                         #
+# Outputs: _                                                                        #
+# Methods: step(action)                                                             #
+#          check_jackknife()                                                        #
+#          check_out_of_bounds()                                                    #
+#          calc_reward()                                                            #
+#          reset()                                                                  #
+#          reset_random()                                                           #
+#          check_timeout()                                                          #
+#          render()                                                                 #
+#          get_absolute_translation_and_rotation_of_truck_and_trailer()             #
+#          visualize()                                                              #
+#          close()                                                                  #
+#                                                                                   #
+# step(action)                                                                      #
+# For a detailed docomentation please take a look at the open ai gym documentation  #
+# Inputs: action absolute translation of the destination                            #
+# Outputs: truck_translation_x     Part of the state vector                         #
+#          truck_translation_y     Part of the state vector                         #
+#          truck_rotation          Part of the state vector                         #
+#          first_trailer_rotation  Part of the state vector                         #
+#          second_trailer_rotation Part of the state vector                         #
+#          velocity                Part of the state vector                         #
+#          steering_percentage     Part of the state vector                         #
+#          reward                                                                   #
+#          done                                                                     #
+#          info                                                                     #
+#                                                                                   #
+# check_jackknife()                                                                 #
+# Checks if the truck and the trailer do jackknife                                  #
+# Inputs: _                                                                         #
+# Outputs: jackknive                                                                #
+#                                                                                   #
+# check_out_of_bounds()                                                             # 
+# Checks if the point of rotation of the vehicles is out of the state space bounds  #
+# Inputs: _                                                                         #
+# Outputs: out_of_bounds                                                            #
+#                                                                                   #
+# calc_reward()                                                                     # 
+# For a detailed docomentation please take a look at the open ai gym documentation  #
+# Inputs: _                                                                         #
+# Outputs: reward                                                                   #
+#          done                                                                     #
+#                                                                                   #
+# reset()                                                                           #
+# For a detailed docomentation please take a look at the open ai gym documentation  # 
+# Outputs: truck_translation_x     Part of the state vector                         #
+#          truck_translation_y     Part of the state vector                         #
+#          truck_rotation          Part of the state vector                         #
+#          first_trailer_rotation  Part of the state vector                         #
+#          second_trailer_rotation Part of the state vector                         #
+#          velocity                Part of the state vector                         #
+#          steering_percentage     Part of the state vector                         #
+#                                                                                   #
+# reset_random()                                                                    #
+# For a detailed docomentation please take a look at the open ai gym documentation  #
+# Inputs: _                                                                         #
+# Outputs: truck_translation_x     Part of the state vector                         #
+#          truck_translation_y     Part of the state vector                         #
+#          truck_rotation          Part of the state vector                         #
+#          first_trailer_rotation  Part of the state vector                         #
+#          second_trailer_rotation Part of the state vector                         #
+#          velocity                Part of the state vector                         #
+#          steering_percentage     Part of the state vector                         #
+#                                                                                   #
+# check_timeout()                                                                   #
+# Checks if the truck and trailer searched the terminal state for too long          #
+# Inputs: _                                                                         #
+# Outputs: timeout                                                                  #
+#                                                                                   #
+# render()                                                                          #
+# Custom self-made rendering function. Uses the visualize() function                #
+# Inputs: _                                                                         #
+# Outputs: _                                                                        # 
+#                                                                                   #
+# get_absolute_translation_and_rotation_of_truck_and_trailer()                      #
+# Returns the absolute positions of all all vehicle translations and rotations      #
+# Inputs: _                                                                         #
+# Outputs: truck_absolute_translation                                               #
+#          truck_absolute_rotation                                                  #
+#          first_trailer_absolute_translation                                       #
+#          first_trailer_absolute_rotation                                          #
+#          second_trailer_absolute_translation                                      #
+#          second_trailer_absolute_rotation                                         #
+#                                                                                   #
+# visualize()                                                                       #
+# Custom self-made rendering function. Functions with matplotlib                    #
+# Inputs: _                                                                         #
+# Outputs: _                                                                        #
+#                                                                                   #
+# close()                                                                           #
+# For a detailed docomentation please take a look at the open ai gym documentation  #
+# Inputs: _                                                                         #
+# Outputs: _                                                                        #
+#####################################################################################
+
+__author__ = "Pär-Love Palm, Felix Steimle, Jakob Wadman, Veit Wörner"
+__credits__ = ["Pär-Love Palm", "Felix Steimle", "Jakob Wadman", "Veit Wörner"]
+__license__ = "GPL"
+__version__ = "0.9b"
+__maintainer__ = "Veit Wörner"
+__email__ = "veit@student.chalmers.se"
+__status__ = "Production"
+
 import gym
 import numpy as np
 from gym import spaces
@@ -12,6 +124,9 @@ class Reverse_variable_trailer_number_environment(gym.Env):
                 'video.frames_per_second' : 25}
 
     def __init__(self):
+        
+        # Here you can switch visualization during training on and off
+        self.visualize_training = False
         
         self.name = "Reverse_variable_trailer_number"
         
@@ -100,7 +215,9 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         
         self.simulate_combination = Simulate_combination(self.visualisation_shapes,\
                                                          self.number_trailers,\
-                                                         self.step_size)
+                                                         self.step_size)        
+        if self.visualize_training:
+            self.visualize_combination = Visualize_combination(self.visualisation_shapes)
         
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
@@ -159,8 +276,8 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         
         reward, done = self.calc_reward()
         
-#        if self.visualisation:          
-#            self.visualize()
+        if self.visualize_training:          
+           self.visualize()
             
         return self.state, reward, done, {}
     
@@ -237,53 +354,53 @@ class Reverse_variable_trailer_number_environment(gym.Env):
             translation_error = np.linalg.norm(first_trailer_absolute_translation-self.destination_translation)
         
         # The reward is the lower, the higher the distance to the target is 
-        reward = -1e3*(translation_error)**2
+        reward = -(translation_error)**2
         # reward = -translation_error
         
         # The reward is the lower, the higher the travelled distance is 
         if velocity > 0:
-            reward -= 1e-2*self.traveled_distance
-        else:
             reward -= 1e-1*self.traveled_distance
+        else:
+            reward -= 1e-2*self.traveled_distance
         
         # The reward is the lower, the higher the number of direction changes is
         direction_change = self.velocity_old*self.velocity_new < 0
         if direction_change:
-            reward -= 1e3
+            reward -= 1
         
         # Check if we jackknifed and induce a huge penalty for it
         jackknife = self.check_jackknife()
         if jackknife: 
-            reward -= 1e3
+            reward -= 1
             self.jackknive_number += 1
             
-            if self.jackknive_number > 100:
+            if self.jackknive_number > 1e2:
                 done = True
-                reward -= 1e6
+                print('jackknife')
         
         # Checks if the trailer is out of bounds
         if self.check_out_of_bounds():
-            reward -= 1e18
+            reward -= 1e3
             done = True
+            print('bounds')
         
-        if translation_error < 0.1:
+        if translation_error < 0.25:
             # Christmas bonus
-            reward += 1e9
+            reward += 1e6
             # The reward is the lower, the higher the rotation error of the trailer is
             if self.number_trailers == 0:
-                reward -= 1e3*np.abs(truck_absolute_rotation)
+                reward -= np.abs(truck_absolute_rotation)
             elif self.number_trailers == 2:
-                reward -= 1e3*np.abs(second_trailer_absolute_rotation)
+                reward -= np.abs(second_trailer_absolute_rotation)
             else:
-                reward -= 1e3*np.abs(first_trailer_absolute_rotation)
+                reward -= np.abs(first_trailer_absolute_rotation)
             done = True
+            print('parked')
             
         if self.check_timeout():
-            reward -= 1e9
+            reward -= 1e3
             done = True
-            
-        if done:
-            print("done")
+            print('timeout')
             
         return reward, done
 
@@ -334,7 +451,8 @@ class Reverse_variable_trailer_number_environment(gym.Env):
         return self.state
     
     def check_timeout(self):
-        return self.traveled_distance > self.maximal_traveled_distance
+        timeout = self.traveled_distance > self.maximal_traveled_distance
+        return timeout
     
     
     def render(self):

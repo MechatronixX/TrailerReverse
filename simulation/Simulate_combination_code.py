@@ -1,24 +1,29 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-###################################################################################################################
-# Simulate_combination()                                                                                          #  
-#                                                                                                                 #
-# This class initialises the simulation of of a truck with a variable number of trailers                          #                
-# Inputs: destination_translation absolute translation of the destination                                         #
-#         destination_rotation    absolute rotation of the destination, value in degrees                          #
-# Outputs: _                                                                                                      #
-# Methods: run(velocity,steering_percentage)                                                                      #
-#                                                                                                                 #
-# run(velocity,steering_percentage)                                                                               #
-# This method is used to simulate the movement of a truck with a variable number of trailers                      #
-# Inputs: destination_translation absolute translation of the destination                                         #
-#         steering_percentage     steering angle of the truck, value between -1 and 1                             #
-# Outputs: truck_translation       absolute translation of the truck                                              #
-#          truck_rotation          absolute rotation of the truck, value in degrees                               #
-#          first_trailer_rotation  relative rotation of the first trailer to the truck, value in degrees          #
-#          second_trailer_rotation relative rotation of the second trailer to the first trailer, value in degrees #
-###################################################################################################################
+##############################################################################################################################
+# Simulate_combination()                                                                                                     #    
+#                                                                                                                            #
+# This class initialises the simulation of of a truck with a variable number of trailers                                     #                 
+# Inputs: visualisation_shapes array provided by the method load_shapes(number_trailers)                                     #
+#         number_trailers      number of trailers, value between 0 and 2                                                     #
+#         step_size            size of the time steps                                                                        #
+# Outputs: _                                                                                                                 #
+# Methods: run(truck_translation,truck_rotation,first_trailer_rotation,second_trailer_rotation,velocity,steering_percentage) #
+#                                                                                                                            #
+# run(truck_translation,truck_rotation,first_trailer_rotation,second_trailer_rotation,velocity,steering_percentage)          #                                                                               #
+# This method is used to simulate the movement of a truck with a variable number of trailers                                 #
+# Inputs: truck_translation       absolute translation of the truck                                                          #
+#         truck_rotation          absolute rotation of the truck, value in degrees                                           #
+#         first_trailer_rotation  relative rotation of the first trailer to the truck, value in degrees                      #
+#         second_trailer_rotation relative rotation of the second trailer to the first trailer, value in degrees             #
+#         velocity                velocity of the truck, value between -1 and 1                                              #
+#         steering_percentage     steering angle of the truck, value between -1 and 1                                        #
+# Outputs: truck_translation       absolute translation of the truck                                                         #
+#          truck_rotation          absolute rotation of the truck, value in degrees                                          #
+#          first_trailer_rotation  relative rotation of the first trailer to the truck, value in degrees                     #
+#          second_trailer_rotation relative rotation of the second trailer to the first trailer, value in degrees            #
+##############################################################################################################################
 
 __author__ = "Pär-Love Palm, Felix Steimle, Jakob Wadman, Veit Wörner"
 __credits__ = ["Pär-Love Palm", "Felix Steimle", "Jakob Wadman", "Veit Wörner"]
@@ -75,7 +80,6 @@ class Simulate_combination():
         self.step_size = step_size        
 
     def run(self,truck_translation,truck_rotation,first_trailer_rotation,second_trailer_rotation,velocity,steering_percentage):
-        """ Update the system one step given current velocity and steering angle. """
         steering_angle = steering_percentage*self.maximal_steering_angle
         
         #This step basically seems to perform euler forward for the truck. 
@@ -103,7 +107,7 @@ class Simulate_combination():
             old_truck_rotation = truck_rotation
             
             rotation_truck = 0      
-            ## Truck movement
+            # truck movement
             if steering_percentage != 0:
                 lock = self.wheelbase_truck/np.tan(np.deg2rad(steering_angle))
                 rotation_truck = np.rad2deg(np.arcsin(distance/lock))/2
@@ -116,8 +120,7 @@ class Simulate_combination():
             old_first_trailer_rotation = first_trailer_rotation
             
             if self.number_trailers >= 1:
-            
-                ## first_trailer movement
+                # first_trailer movement
                 truck_hitch_movement = truck_movement\
                                        +endpoint_movement(hitch_vector_truck,\
                                                           step_rotation_truck)
@@ -129,6 +132,7 @@ class Simulate_combination():
                                                             -first_trailer_movement\
                                                             +truck_hitch_movement,\
                                                             np.sign(distance)*truck_movement)
+                    
                 first_trailer_rotation = -step_rotation_truck+rotation_first_trailer
                 if first_trailer_rotation > self.maximal_first_trailer_rotation:
                     first_trailer_rotation = self.maximal_first_trailer_rotation
@@ -138,8 +142,7 @@ class Simulate_combination():
                 step_rotation_first_trailer = first_trailer_rotation-old_first_trailer_rotation
                 
             if self.number_trailers == 2:    
-                
-                ## second_trailer movement
+                # second_trailer movement
                 first_trailer_hitch_movement = first_trailer_movement\
                                        +endpoint_movement(hitch_vector_first_trailer_second_trailer,\
                                                           step_rotation_first_trailer)
@@ -151,6 +154,17 @@ class Simulate_combination():
                                                               -second_trailer_movement\
                                                               +first_trailer_hitch_movement,\
                                                               np.sign(distance)*first_trailer_movement)
+                                           
+                if np.isnan(angle_two_vectors(hitch_vector_second_trailer\
+                                                              -second_trailer_movement\
+                                                              +first_trailer_hitch_movement,\
+                                                              np.sign(distance)*first_trailer_movement)):
+                    print(hitch_vector_second_trailer\
+                                                              -second_trailer_movement\
+                                                              +first_trailer_hitch_movement)
+                    print(np.sign(distance)*first_trailer_movement)
+                    wait(1000)
+                    
                 second_trailer_rotation = -step_rotation_truck-step_rotation_first_trailer+rotation_second_trailer
                 if second_trailer_rotation>self.maximal_second_trailer_rotation:
                     second_trailer_rotation = self.maximal_second_trailer_rotation

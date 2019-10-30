@@ -1,9 +1,20 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct 24 18:33:53 2019
+#!/usr/bin/env python
+# coding: utf-8
 
-@author: root
-"""
+##########################################################################################
+# run()                                                                                  # 
+# This is the main method of the functionality to visualize the outcomes of the training #
+# Inputs: _                                                                              #
+# Outputs: _                                                                             #
+##########################################################################################
+
+__author__ = "Pär-Love Palm, Felix Steimle, Jakob Wadman, Veit Wörner"
+__credits__ = ["Pär-Love Palm", "Felix Steimle", "Jakob Wadman", "Veit Wörner"]
+__license__ = "GPL"
+__version__ = "0.9b"
+__maintainer__ = "Veit Wörner"
+__email__ = "veit@student.chalmers.se"
+__status__ = "Production"
 
 from stable_baselines import PPO2
 
