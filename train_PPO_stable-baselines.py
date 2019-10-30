@@ -28,19 +28,21 @@ __status__ = "Production"
 import numpy as np
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import SubprocVecEnv
+from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import PPO2
 from stable_baselines.bench import Monitor
 from stable_baselines.results_plotter import load_results, ts2xy
 
-
-import matplotlib as plt
-
 import numpy as np
-import matplotlib.pyplot as pltimport 
+import matplotlib.pyplot as plt 
 import os
 
 from gymEnvironments.gym_reverse_variable_trailer_number import Reverse_variable_trailer_number_environment
 
+from gymEnvironments.gym_trailerReverse_disc import CarTrailerParkingRevEnv
+
+#Train the in environment and monitor training. Based Example from
+# https://stable-baselines.readthedocs.io/en/master/guide/examples.html#using-callback-monitoring-training
 log_dir = "/tmp/gym/"
 os.makedirs(log_dir, exist_ok=True)
 
@@ -59,21 +61,22 @@ def train():
     # multiprocess environment
    
     n_cpu = 4
-    env = SubprocVecEnv([lambda: Reverse_variable_trailer_number_environment() for i in range(n_cpu)])
+    #env = SubprocVecEnv([lambda: Reverse_variable_trailer_number_environment() for i in range(n_cpu)])
     
-    #env =  Reverse_variable_trailer_number_environment()
+    #Choose either the truck or the car environment. 
+    #env = CarTrailerParkingRevEnv() 
+    env =  Reverse_variable_trailer_number_environment()
     
     # Logs will be saved in log_dir/monitor.csv
-    #env = Monitor(env, log_dir, allow_early_resets=True)
+    env = Monitor(env, log_dir, allow_early_resets=True)
+    env = DummyVecEnv([lambda: env])
     
     #env = SubprocVecEnv( [env])
     
     model = PPO2(MlpPolicy, env, verbose=1) 
     
     
-    
-    
-    model.learn(total_timesteps=np.int(1e3), log_interval=10, callback = callback)
+    model.learn(total_timesteps=np.int(5e5), log_interval=10, callback = callback)
     model.save("ppo2_trailer")
     
 def moving_average(values, window):
@@ -95,7 +98,7 @@ def plot_results(log_folder, title='Learning Curve'):
     :param title: (str) the title of the task to plot
     """
     x, y = ts2xy(load_results(log_folder), 'timesteps')
-    y = moving_average(y, window=50)
+    #y = moving_average(y, window=50)
     # Truncate x
     x = x[len(x) - len(y):]
 
