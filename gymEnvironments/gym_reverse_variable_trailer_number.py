@@ -354,53 +354,55 @@ class Reverse_variable_trailer_number_environment(gym.Env):
             translation_error = np.linalg.norm(first_trailer_absolute_translation-self.destination_translation)
         
         # The reward is the lower, the higher the distance to the target is 
-        reward = -(translation_error)**2
+        reward = -(translation_error)
+        
+        done = translation_error < 0.5 or self.check_timeout()
         # reward = -translation_error
         
-        # The reward is the lower, the higher the travelled distance is 
-        if velocity > 0:
-            reward -= 1e-1*self.traveled_distance
-        else:
-            reward -= 1e-2*self.traveled_distance
-        
-        # The reward is the lower, the higher the number of direction changes is
-        direction_change = self.velocity_old*self.velocity_new < 0
-        if direction_change:
-            reward -= 1
-        
-        # Check if we jackknifed and induce a huge penalty for it
-        jackknife = self.check_jackknife()
-        if jackknife: 
-            reward -= 1
-            self.jackknive_number += 1
-            
-            if self.jackknive_number > 1e2:
-                done = True
-                print('jackknife')
-        
-        # Checks if the trailer is out of bounds
-        if self.check_out_of_bounds():
-            reward -= 1e3
-            done = True
-            print('bounds')
-        
-        if translation_error < 0.25:
-            # Christmas bonus
-            reward += 1e6
-            # The reward is the lower, the higher the rotation error of the trailer is
-            if self.number_trailers == 0:
-                reward -= np.abs(truck_absolute_rotation)
-            elif self.number_trailers == 2:
-                reward -= np.abs(second_trailer_absolute_rotation)
-            else:
-                reward -= np.abs(first_trailer_absolute_rotation)
-            done = True
-            print('parked')
-            
-        if self.check_timeout():
-            reward -= 1e3
-            done = True
-            print('timeout')
+#        # The reward is the lower, the higher the travelled distance is 
+#        if velocity > 0:
+#            reward -= 1e-1*self.traveled_distance
+#        else:
+#            reward -= 1e-2*self.traveled_distance
+#        
+#        # The reward is the lower, the higher the number of direction changes is
+#        direction_change = self.velocity_old*self.velocity_new < 0
+#        if direction_change:
+#            reward -= 1
+#        
+#        # Check if we jackknifed and induce a huge penalty for it
+#        jackknife = self.check_jackknife()
+#        if jackknife: 
+#            reward -= 1
+#            self.jackknive_number += 1
+#            
+#            if self.jackknive_number > 1e2:
+#                done = True
+#                print('jackknife')
+#        
+#        # Checks if the trailer is out of bounds
+#        if self.check_out_of_bounds():
+#            reward -= 1e3
+#            done = True
+#            print('bounds')
+#        
+#        if translation_error < 0.25:
+#            # Christmas bonus
+#            reward += 1e6
+#            # The reward is the lower, the higher the rotation error of the trailer is
+#            if self.number_trailers == 0:
+#                reward -= np.abs(truck_absolute_rotation)
+#            elif self.number_trailers == 2:
+#                reward -= np.abs(second_trailer_absolute_rotation)
+#            else:
+#                reward -= np.abs(first_trailer_absolute_rotation)
+#            done = True
+#            print('parked')
+#            
+#        if self.check_timeout():
+#            reward -= 1e3
+#            done = True
+#            print('timeout')
             
         return reward, done
 

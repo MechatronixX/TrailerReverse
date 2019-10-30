@@ -218,6 +218,10 @@ class CarTrailerParkingRevEnv(gym.Env):
         
         done = dist < 0.9 
         
+        if(done): 
+            reward = 4000; 
+        
+        
         #Quick and dirty debug! Timeout is not a terminal state, but a state with 
         #a discounted next reward. We just do not know how to implement a timeout when using 
         # baselines . Timeout should not be a terminal state! https://arxiv.org/abs/1712.00378
